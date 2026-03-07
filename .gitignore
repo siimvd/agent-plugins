@@ -1,0 +1,14 @@
+# OS
+.DS_Store
+
+# Docs (project-specific, not part of the plugin)
+docs/
+
+# Session state
+CONTINUITY.md
+
+# Node
+node_modules/
+
+# Generated OpenCode commands
+.opencode/
