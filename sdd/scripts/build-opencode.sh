@@ -102,3 +102,10 @@ build_command \
 build_command \
   "$PLUGIN_DIR/skills/finish" \
   "sdd-finish"
+
+# Build setup command
+build_command \
+  "$PLUGIN_DIR/skills/setup" \
+  "sdd-setup" \
+  "agents-template.md" \
+  "sdd-section.md"

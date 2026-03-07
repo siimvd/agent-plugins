@@ -5,11 +5,12 @@ An opinionated, portable workflow for structured feature development with AI cod
 ## Workflow
 
 ```
-brainstorm → plan → build → review → finish
+setup → brainstorm → plan → build → review → finish
 ```
 
 | Command | Status | Description |
 |---------|--------|-------------|
+| `/sdd:setup` | v0.6.0 | Bootstrap SDD in a repo: AGENTS.md, directories, templates |
 | `/sdd:brainstorm` | v0.1.0 | Explore an idea collaboratively, produce a mini-PRD |
 | `/sdd:plan` | v0.2.0 | Convert mini-PRD or description to full spec + GitHub Issues |
 | `/sdd:build` | v0.3.0 | Autonomous spec execution with worktrees, commits, and PR |
@@ -21,11 +22,8 @@ brainstorm → plan → build → review → finish
 ### Claude Code (plugin)
 
 ```bash
-# From a project directory
-claude --plugin-dir /path/to/claude-setup/sdd
+claude plugin add https://github.com/siimvd/agent-sdd
 ```
-
-Or add to your Claude Code settings to load automatically.
 
 ### OpenCode CLI
 
@@ -38,6 +36,14 @@ Generate the OpenCode command from the canonical skill:
 This creates `.opencode/commands/sdd-brainstorm.md`, `sdd-plan.md`, `sdd-build.md`, `sdd-review.md`, and `sdd-finish.md` in the repo root.
 
 ## Usage
+
+### Setup
+
+```
+/sdd:setup
+```
+
+One-time command to bootstrap SDD in your repository. Creates or updates `AGENTS.md` with best practices and SDD workflow instructions, sets up `docs/specs/`, `docs/ideas/`, and copies spec templates. Safe to run multiple times — skips what already exists.
 
 ### Brainstorm
 
