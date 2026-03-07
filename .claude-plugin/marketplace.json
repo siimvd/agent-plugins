@@ -1,0 +1,21 @@
+{
+  "name": "agent-sdd",
+  "owner": {
+    "name": "Siim Viidu"
+  },
+  "metadata": {
+    "description": "Spec Driven Development workflow for AI coding tools"
+  },
+  "plugins": [
+    {
+      "name": "sdd",
+      "source": "./sdd",
+      "description": "Spec Driven Development workflow: setup, brainstorm, plan, build, review, finish",
+      "version": "0.6.0",
+      "author": {
+        "name": "Siim Viidu"
+      },
+      "license": "MIT"
+    }
+  ]
+}

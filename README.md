@@ -21,8 +21,11 @@ setup → brainstorm → plan → build → review → finish
 
 ### Claude Code (plugin)
 
-```bash
-claude plugin add https://github.com/siimvd/agent-sdd
+From within Claude Code, add the marketplace and install the plugin:
+
+```
+/plugin marketplace add siimvd/agent-sdd
+/plugin install sdd@agent-sdd
 ```
 
 ### OpenCode CLI
