@@ -40,6 +40,8 @@ This creates `.opencode/commands/sdd-brainstorm.md`, `sdd-plan.md`, `sdd-build.m
 
 ## Usage
 
+In the examples below, `<feature>` is the name of your spec (e.g. `notification-preferences`, `fix-login-bug`). This maps to `docs/specs/<feature>.md`.
+
 ### Setup
 
 ```
@@ -51,8 +53,8 @@ One-time command to bootstrap SDD in your repository. Creates or updates `AGENTS
 ### Brainstorm
 
 ```
-/sdd:brainstorm "notification preferences for users"
-/sdd:brainstorm "notification preferences" --fast
+/sdd:brainstorm "your idea description here"
+/sdd:brainstorm "your idea" --fast
 ```
 
 Explores an idea through conversation and produces a mini-PRD at `docs/ideas/<name>.md`.
@@ -60,10 +62,10 @@ Explores an idea through conversation and produces a mini-PRD at `docs/ideas/<na
 ### Plan
 
 ```
-/sdd:plan notification-preferences              # from brainstorm output
-/sdd:plan "fix login redirect bug"              # from scratch
-/sdd:plan notification-preferences --fast       # compressed mode
-/sdd:plan notification-preferences --ticket JIRA-123  # link external tracker
+/sdd:plan <feature>                       # from brainstorm output
+/sdd:plan "fix login redirect bug"        # from scratch (inline description)
+/sdd:plan <feature> --fast                # compressed mode
+/sdd:plan <feature> --ticket JIRA-123     # link external tracker
 ```
 
 Produces a full spec at `docs/specs/<name>.md` with:
@@ -75,8 +77,8 @@ Produces a full spec at `docs/specs/<name>.md` with:
 ### Build
 
 ```
-/sdd:build notification-preferences
-/sdd:build notification-preferences --isolated-tasks
+/sdd:build <feature>
+/sdd:build <feature> --isolated-tasks
 ```
 
 Reads `docs/specs/<name>.md` and executes all tasks autonomously in a 6-phase process:
@@ -95,8 +97,8 @@ Must run in a **fresh session** — the spec file is complete context.
 ### Review
 
 ```
-/sdd:review notification-preferences
-/sdd:review notification-preferences --all
+/sdd:review <feature>
+/sdd:review <feature> --all
 ```
 
 Auto-detects mode based on PR state:
@@ -109,7 +111,7 @@ Verifies before implementing — pushes back on technically incorrect suggestion
 ### Finish
 
 ```
-/sdd:finish notification-preferences
+/sdd:finish <feature>
 ```
 
 Finalizes a completed feature in a 5-phase process:
