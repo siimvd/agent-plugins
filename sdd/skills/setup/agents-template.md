@@ -36,7 +36,7 @@ For anything beyond a trivial change:
 | ----------- | --------------------------------- |
 | Single task | < 200 lines changed               |
 | Plan        | 5-8 tasks max (split beyond that) |
-| CLAUDE.md   | < 300 lines (shorter is better)   |
+| AGENTS.md   | < 300 lines (shorter is better)   |
 | Single PR   | < 500 lines (human-reviewable)    |
 
 **Anti-overengineering:**
@@ -69,7 +69,7 @@ Before declaring anything complete:
 
 ## CONTEXT MANAGEMENT
 
-- **Keep AGENTS.md and CLAUDE.md lean.** Overview in root, details in subdirectory AGENTS.md or CLAUDE.md files. Use progressive disclosure.
+- **Keep AGENTS.md lean.** Overview in root, details in subdirectory AGENTS.md files. Use progressive disclosure.
 - **Use /clear between unrelated tasks.** Context drift is real.
 - **Use /compact with explicit keep instructions** when context gets heavy.
 - **Write state to disk**, not just conversation. Plans, decisions, and progress belong in files.
