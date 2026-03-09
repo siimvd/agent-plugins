@@ -96,6 +96,7 @@ gh pr create --draft \
 #### 1e. Update GitHub Issues
 
 ```bash
+gh issue edit <epic> --add-assignee @me
 gh issue comment <epic> --body "Build started. Draft PR: #<pr>"
 ```
 
@@ -108,12 +109,17 @@ Work through tasks sequentially. Commit after each. Update issues in real-time.
 
 For each task in dependency order:
 
-**1. UPDATE SPEC** — mark task in-progress
+**1. UPDATE ISSUE** — assign to current user
+```bash
+gh issue edit <task-issue> --add-assignee @me
+```
+
+**2. UPDATE SPEC** — mark task in-progress
 ```
 **Status**: pending → **Status**: in-progress
 ```
 
-**2. READ CONTEXT**
+**3. READ CONTEXT**
 - Read reference files listed in the task
 ## Inlined: references/agent-prompts.md
 # Subagent Prompt Templates
@@ -288,17 +294,17 @@ DO NOT:
 - Skip tests
 ```
 
-**3. IMPLEMENT**
+**4. IMPLEMENT**
 - Write tests first (TDD)
 - Implement minimal code to pass tests
 - Follow patterns from reference files
 
-**4. RUN TESTS**
+**5. RUN TESTS**
 - Run focused tests for changed files
 - Fix any failures immediately
 - Run lint/typecheck
 
-**5. ADAPTIVE REVIEW** (if triggered)
+**6. ADAPTIVE REVIEW** (if triggered)
 ## Inlined: references/review-triggers.md
 # Adaptive Review Triggers
 
@@ -349,14 +355,14 @@ If any signal matches, spawn the corresponding review subagent after implementat
 - If triggered, spawn a short-lived review subagent
 - Fix any HIGH confidence issues found
 
-**6. COMMIT + PUSH**
+**7. COMMIT + PUSH**
 ```bash
 git add <specific files for this task>
 git commit -m "<commit message from task spec>"
 git push
 ```
 
-**7. UPDATE SPEC** — mark task done
+**8. UPDATE SPEC** — mark task done
 ```
 **Status**: in-progress → **Status**: done
 **Progress**: N/M complete (increment)
@@ -364,12 +370,12 @@ Top checkbox: - [ ] Task N → - [x] Task N
 Acceptance criteria: check off completed items
 ```
 
-**8. UPDATE ISSUE** — mark done
+**9. UPDATE ISSUE** — mark done
 ```bash
 gh issue comment <task-issue> --body "Completed in <sha>. Files: <list>. Criteria met: <list>"
 ```
 
-**9. CONTINUE or PAUSE**
+**10. CONTINUE or PAUSE**
 - Dependencies met → continue to next task
 - Blocked → pause, comment on issue, ask user
 - Design flaw discovered → pause, suggest spec update
