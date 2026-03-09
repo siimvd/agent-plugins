@@ -96,8 +96,7 @@ gh pr create --draft \
 #### 1e. Update GitHub Issues
 
 ```bash
-# Mark epic in-progress
-gh issue edit <epic> --add-label "status:in-progress" --remove-label "status:ready"
+gh issue edit <epic> --add-assignee @me
 gh issue comment <epic> --body "Build started. Draft PR: #<pr>"
 ```
 
@@ -111,9 +110,9 @@ Work through tasks sequentially. Commit after each. Update issues in real-time.
 
 For each task in dependency order:
 
-**1. UPDATE ISSUE** — mark in-progress
+**1. UPDATE ISSUE** — assign to current user
 ```bash
-gh issue edit <task-issue> --add-label "status:in-progress" --remove-label "status:ready"
+gh issue edit <task-issue> --add-assignee @me
 ```
 
 **2. UPDATE SPEC** — mark task in-progress
@@ -158,7 +157,6 @@ Acceptance criteria: check off completed items
 
 **9. UPDATE ISSUE** — mark done
 ```bash
-gh issue edit <task-issue> --add-label "status:done" --remove-label "status:in-progress"
 gh issue comment <task-issue> --body "Completed in <sha>. Files: <list>. Criteria met: <list>"
 ```
 
@@ -320,7 +318,7 @@ After each subagent completes:
 - **Spec is the source of truth** — implement what the spec says, not what seems better. If the spec is wrong, pause and suggest an update
 - **One task, one commit** — each task produces exactly one commit (plus fix commits if tests fail)
 - **Push after every commit** — backup and visibility
-- **Update issues in real-time** — status labels and comments after every task, not batched at end
+- **Update issues in real-time** — comments after every task, not batched at end
 - **Evidence before claims** — run full test suite before claiming build is complete
 - **Don't skip polish** — code simplification and security review run before every PR
 - **Max 3 attempts** — if fix → re-verify fails 3 times, the approach is wrong. Stop, reassess, or ask the user. Never brute-force
