@@ -185,9 +185,16 @@ Collect results from all 4 agents. Deduplicate overlapping findings. Organize by
 
 ### Step 4: Post Review to PR
 
-```bash
-gh pr comment <pr> --body "<review comment>"
-```
+Use `gh pr review` to submit a formal GitHub review (not `gh pr comment`, which doesn't count as a review):
+
+- **No P1 findings** → approve:
+  ```bash
+  gh pr review <pr> --approve --body "<review comment>"
+  ```
+- **P1 findings exist** → request changes:
+  ```bash
+  gh pr review <pr> --request-changes --body "<review comment>"
+  ```
 
 Format:
 
@@ -216,7 +223,7 @@ Format:
 Reviewed against spec `docs/specs/<name>.md` and project CLAUDE.md.
 ```
 
-If no findings: post "No issues found. Spec compliance verified, security and conventions checked."
+If no findings: approve with "No issues found. Spec compliance verified, security and conventions checked."
 
 ---
 
