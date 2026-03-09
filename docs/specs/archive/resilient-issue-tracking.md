@@ -1,7 +1,7 @@
 # Resilient Issue Tracking
 
 **Date**: 2026-03-09
-**Status**: done
+**Status**: completed
 **Author**: Claude
 **Spec**: docs/specs/resilient-issue-tracking.md
 **Ticket**: GH-1
