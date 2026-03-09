@@ -96,8 +96,6 @@ gh pr create --draft \
 #### 1e. Update GitHub Issues
 
 ```bash
-# Mark epic in-progress
-gh issue edit <epic> --add-label "status:in-progress" --remove-label "status:ready"
 gh issue comment <epic> --body "Build started. Draft PR: #<pr>"
 ```
 
@@ -111,44 +109,39 @@ Work through tasks sequentially. Commit after each. Update issues in real-time.
 
 For each task in dependency order:
 
-**1. UPDATE ISSUE** — mark in-progress
-```bash
-gh issue edit <task-issue> --add-label "status:in-progress" --remove-label "status:ready"
-```
-
-**2. UPDATE SPEC** — mark task in-progress
+**1. UPDATE SPEC** — mark task in-progress
 ```
 **Status**: pending → **Status**: in-progress
 ```
 
-**3. READ CONTEXT**
+**2. READ CONTEXT**
 - Read reference files listed in the task
 - If task touches unfamiliar code, spawn a short-lived Explore subagent to investigate first (see `${CLAUDE_SKILL_DIR}/references/agent-prompts.md`)
 
-**4. IMPLEMENT**
+**3. IMPLEMENT**
 - Write tests first (TDD)
 - Implement minimal code to pass tests
 - Follow patterns from reference files
 
-**5. RUN TESTS**
+**4. RUN TESTS**
 - Run focused tests for changed files
 - Fix any failures immediately
 - Run lint/typecheck
 - **Max 3 attempts**: if a fix → re-verify cycle fails 3 times, stop and reassess. The approach is likely wrong — pause, investigate root cause, or ask the user
 
-**6. ADAPTIVE REVIEW** (if triggered)
+**5. ADAPTIVE REVIEW** (if triggered)
 - Check risk signals against `${CLAUDE_SKILL_DIR}/references/review-triggers.md`
 - If triggered, spawn a short-lived review subagent
 - Fix any HIGH confidence issues found
 
-**7. COMMIT + PUSH**
+**6. COMMIT + PUSH**
 ```bash
 git add <specific files for this task>
 git commit -m "<commit message from task spec>"
 git push
 ```
 
-**8. UPDATE SPEC** — mark task done
+**7. UPDATE SPEC** — mark task done
 ```
 **Status**: in-progress → **Status**: done
 **Progress**: N/M complete (increment)
@@ -156,13 +149,12 @@ Top checkbox: - [ ] Task N → - [x] Task N
 Acceptance criteria: check off completed items
 ```
 
-**9. UPDATE ISSUE** — mark done
+**8. UPDATE ISSUE** — mark done
 ```bash
-gh issue edit <task-issue> --add-label "status:done" --remove-label "status:in-progress"
 gh issue comment <task-issue> --body "Completed in <sha>. Files: <list>. Criteria met: <list>"
 ```
 
-**10. CONTINUE or PAUSE**
+**9. CONTINUE or PAUSE**
 - Dependencies met → continue to next task
 - Blocked → pause, comment on issue, ask user
 - Design flaw discovered → pause, suggest spec update
@@ -320,7 +312,7 @@ After each subagent completes:
 - **Spec is the source of truth** — implement what the spec says, not what seems better. If the spec is wrong, pause and suggest an update
 - **One task, one commit** — each task produces exactly one commit (plus fix commits if tests fail)
 - **Push after every commit** — backup and visibility
-- **Update issues in real-time** — status labels and comments after every task, not batched at end
+- **Update issues in real-time** — comments after every task, not batched at end
 - **Evidence before claims** — run full test suite before claiming build is complete
 - **Don't skip polish** — code simplification and security review run before every PR
 - **Max 3 attempts** — if fix → re-verify fails 3 times, the approach is wrong. Stop, reassess, or ask the user. Never brute-force
