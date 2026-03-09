@@ -65,6 +65,8 @@ Before declaring anything complete:
 4. Verify the feature actually works end-to-end
 5. Summarize what changed, why, and any known limitations
 
+**Never bypass .gitignore.** Do not use `git add -f` to force-add files that are gitignored. If a file is in `.gitignore`, it is excluded for a reason. If you believe a gitignored file should be tracked, ask the user first — do not override it yourself.
+
 ---
 
 ## CONTEXT MANAGEMENT
