@@ -1,7 +1,7 @@
 # Resilient Issue Tracking
 
 **Date**: 2026-03-09
-**Status**: draft
+**Status**: done
 **Author**: Claude
 **Spec**: docs/specs/resilient-issue-tracking.md
 **Ticket**: GH-1
@@ -95,17 +95,17 @@ None.
 
 ## Tasks
 
-**Progress**: 0/2 complete
+**Progress**: 2/2 complete
 
-- [ ] Task 1: Remove all label operations
-- [ ] Task 2: Add issue assignment during build
+- [x] Task 1: Remove all label operations
+- [x] Task 2: Add issue assignment during build
 
 Tasks are ordered by dependency. Each task is a logical unit that results in one commit.
 
 ---
 
 ### Task 1: Remove All Label Operations (GH-2)
-**Status**: pending
+**Status**: done
 
 **Files:**
 - Modify: `sdd/skills/build/SKILL.md`
@@ -143,7 +143,7 @@ Mirror the same removals in:
 ---
 
 ### Task 2: Add Issue Assignment During Build (GH-3)
-**Status**: pending
+**Status**: done
 **Depends on**: Task 1
 
 **Files:**
