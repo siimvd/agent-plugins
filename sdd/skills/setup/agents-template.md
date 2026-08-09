@@ -36,7 +36,7 @@ For anything beyond a trivial change:
 | ----------- | --------------------------------- |
 | Single task | < 200 lines changed               |
 | Plan        | 5-8 tasks max (split beyond that) |
-| AGENTS.md / CLAUDE.md | target under 200 lines each (Anthropic's documented threshold) |
+| AGENTS.md / CLAUDE.md | < 200 lines each (Anthropic's documented threshold) |
 | Single PR   | < 500 lines (human-reviewable)    |
 
 **Anti-overengineering:**
@@ -65,7 +65,7 @@ Before declaring anything complete:
 4. Verify the feature actually works end-to-end
 5. Summarize what changed, why, and any known limitations
 
-**Never bypass .gitignore.** Do not use `git add -f` to force-add files that are gitignored. If a file is in `.gitignore`, it is excluded for a reason. If you believe a gitignored file should be tracked, ask the user first — do not override it yourself.
+**Never bypass .gitignore.** Do not `git add -f` a gitignored file — it is excluded for a reason. If you believe it should be tracked, ask the user first.
 
 ---
 

@@ -42,7 +42,7 @@ Check the current state of the repository:
 
 1. **Check AGENTS.md** — does it exist at the repo root?
 2. **Check for existing SDD section** — if AGENTS.md exists, search for `## SDD` or `## Spec Driven Development` to detect prior setup
-3. **Check CLAUDE.md** — does it exist, and if so does it already contain an `@AGENTS.md` import? Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so this is what makes the file above actually load
+3. **Check CLAUDE.md** — does it exist, and does it already contain an `@AGENTS.md` import?
 4. **Check directory structure** — do `docs/specs/`, `docs/ideas/`, `docs/specs/.templates/` exist?
 5. **Check templates** — do spec templates already exist in `docs/specs/.templates/`?
 6. **Check for gitignored spec paths** — run `git check-ignore -v docs/specs docs/ideas`; record any match and the rule that ignores it
@@ -66,7 +66,7 @@ The following changes will be made:
 Proceed? (y/n)
 ```
 
-If Phase 1 found `docs/specs/` or `docs/ideas/` gitignored, show this warning before the checklist above, and ask for it to be confirmed separately from the main "Proceed?" prompt:
+If Phase 1 found `docs/specs/` or `docs/ideas/` gitignored, show this warning before the checklist and confirm it separately from the "Proceed?" prompt:
 
 ```
 ⚠ docs/specs/ is excluded by .gitignore:5 (`docs/`)
@@ -92,12 +92,12 @@ Based on detection results, perform the needed actions:
 
 #### 3a. CLAUDE.md
 
-Claude Code reads `CLAUDE.md`, not `AGENTS.md` — this step is what makes the file above actually load at session start.
+Claude Code reads `CLAUDE.md`, not `AGENTS.md` — this import is what makes AGENTS.md load at session start.
 
 Three possible states:
 
 **No CLAUDE.md exists:**
-1. Create `CLAUDE.md` at the repo root containing exactly: `@AGENTS.md`
+- Create `CLAUDE.md` at the repo root containing exactly: `@AGENTS.md`
 
 **CLAUDE.md exists without the import:**
 1. Read the existing `CLAUDE.md`
@@ -125,10 +125,9 @@ Three possible states:
 
 #### 3c. Gitignore
 
-Only runs if Phase 1 found a gitignored spec path and the user confirmed the Phase 2 warning separately. Skip silently otherwise.
+Only if Phase 1 found a gitignored spec path and the user confirmed the Phase 2 warning. Otherwise skip silently.
 
-1. Replace the offending rule (e.g. a blanket `docs/`) with `docs/*` plus `!docs/ideas/` and `!docs/specs/`
-2. Never use `git add -f` to bypass the rule instead of fixing it
+- Replace the offending rule (e.g. a blanket `docs/`) with `docs/*` plus `!docs/ideas/` and `!docs/specs/`
 
 #### 3d. Directory Structure
 

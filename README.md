@@ -48,7 +48,7 @@ In the examples below, `<feature>` is the name of your spec (e.g. `notification-
 /sdd:setup
 ```
 
-One-time command to bootstrap SDD in your repository. Creates or updates `AGENTS.md` with best practices and SDD workflow instructions, wires up `CLAUDE.md` to import it (Claude Code reads `CLAUDE.md`, not `AGENTS.md`), sets up `docs/specs/`, `docs/ideas/`, and copies spec templates. Warns and offers a fix if `docs/specs/` or `docs/ideas/` are gitignored, since `/sdd:build` and `/sdd:finish` need to commit them. Safe to run multiple times — skips what already exists.
+One-time command to bootstrap SDD in your repository. Creates or updates `AGENTS.md` with best practices and SDD workflow instructions, wires `CLAUDE.md` to import it (Claude Code reads `CLAUDE.md`, not `AGENTS.md`), creates `docs/specs/` and `docs/ideas/`, and copies spec templates. If either docs path is gitignored, it warns and offers a fix, since `/sdd:build` and `/sdd:finish` commit them. Safe to run multiple times — skips what already exists.
 
 ### Brainstorm
 
