@@ -48,28 +48,25 @@ Perform a comprehensive code review when no existing review needs actioning.
 
 ### Step 1: Gather Context
 
-1. Read `docs/specs/<name>.md` — extract acceptance criteria, task list, key files, design decisions
-2. Read `CLAUDE.md` — extract project conventions
-3. Get the diff: `git diff main...HEAD`
-4. Get changed files: `git diff --name-only main...HEAD`
+1. Note the path to `docs/specs/<name>.md` — reviewers read it themselves for acceptance criteria, task list, key files, and design decisions
+2. Write the diff and changed-file list to one file, once:
+   ```bash
+   mkdir -p .sdd
+   { echo "## Changed files"; git diff --name-only main...HEAD; echo; echo "## Diff"; git diff main...HEAD; } > .sdd/review-diff.md
+   ```
 
 ### Step 2: Launch Review Agents
 
-Spawn 4 parallel review subagents. Each receives the diff, changed file list, and its specific focus area.
+Spawn 4 parallel review subagents, each dispatched as `sdd-reviewer` (see `sdd/agents/sdd-reviewer.md`). Give each the `.sdd/review-diff.md` path and its focus area — never paste the diff or spec content into the prompt. Pasted text stays resident in the orchestrator's context and is re-read on every later turn; a path costs nothing until the subagent reads it.
 
 #### Agent 1: Spec Compliance
 
 ```
 Review the implementation against the spec acceptance criteria.
 
-**Spec acceptance criteria:**
-[paste all acceptance criteria from spec]
+**Spec**: read `docs/specs/<name>.md` yourself — acceptance criteria and each task's criteria are there.
 
-**Task list with per-task criteria:**
-[paste each task's acceptance criteria]
-
-**Diff to review:**
-[paste diff]
+**Diff to review**: read `.sdd/review-diff.md`.
 
 Check for:
 - Every acceptance criterion is implemented and testable
@@ -91,8 +88,7 @@ If all criteria are met, say "All spec criteria satisfied."
 ```
 Review the diff for logic errors, bugs, and edge cases.
 
-**Diff to review:**
-[paste diff]
+**Diff to review**: read `.sdd/review-diff.md`.
 
 Focus on:
 - Logic errors: incorrect conditions, off-by-one, wrong operator
@@ -120,11 +116,7 @@ Report only findings with HIGH confidence. Skip anything uncertain.
 ```
 Security review of changed files.
 
-**Changed files:**
-[paste file list]
-
-**Diff to review:**
-[paste diff]
+**Diff to review**: read `.sdd/review-diff.md` — it lists changed files and the full diff.
 
 Check for OWASP Top 10:
 - Injection (SQL, XSS, command injection, path traversal)
@@ -149,11 +141,9 @@ Report only P1 and P2 findings. Skip P3 unless pattern is widespread.
 ```
 Review the diff for compliance with project conventions.
 
-**CLAUDE.md contents:**
-[paste CLAUDE.md]
+**Conventions**: read `CLAUDE.md` yourself.
 
-**Diff to review:**
-[paste diff]
+**Diff to review**: read `.sdd/review-diff.md`.
 
 Check for:
 - Code style violations specified in CLAUDE.md

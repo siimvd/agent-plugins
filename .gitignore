@@ -9,3 +9,6 @@ node_modules/
 
 # Generated OpenCode commands
 .opencode/
+
+# Scratch scope for review/build dispatch (diffs, briefs — never committed)
+.sdd/

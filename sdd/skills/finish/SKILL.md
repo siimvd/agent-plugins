@@ -137,14 +137,19 @@ Categories (auto-detected from learnings):
 - `mistakes/` — errors and their prevention rules
 - `integrations/` — third-party or cross-system lessons
 
-Format:
+Every learning carries frontmatter so `/sdd:plan` and `/sdd:brainstorm` can find it without opening every file in the directory — a few flat fields, no nesting, so no YAML dependency is needed:
 
 ```markdown
+---
+category: <category>
+tags: [<2-4 short lowercase tags from the problem domain — reuse existing tags across learnings rather than inventing one-off ones>]
+files: [<files this learning is about, from `git diff --name-only` on the feature branch>]
+date: YYYY-MM-DD
+---
+
 # <Learning Title>
 
-**Date**: YYYY-MM-DD
 **Spec**: docs/specs/archive/<name>.md
-**Category**: <category>
 
 ## Context
 [What was being built and why this came up]

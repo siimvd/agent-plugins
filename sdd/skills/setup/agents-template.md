@@ -15,9 +15,8 @@ This file provides guidance to AI Agents such as Claude Code (claude.ai/code), O
 ## BEFORE WRITING ANY CODE
 
 1. **Read AGENTS.md**, project state files, and recent git history
-2. **Search the codebase** before assuming something doesn't exist — use grep/ripgrep to find existing patterns, utilities, and conventions
-3. **Restate the goal** and what success looks like if there is any question or intent or clarity (the why or the what)
-4. **Ask at most one clarifying question** if genuinely ambiguous — don't pepper the user
+2. **Restate the goal** and what success looks like if there is any question or intent or clarity (the why or the what)
+3. **Ask at most one clarifying question** if genuinely ambiguous — don't pepper the user
 
 ---
 
@@ -25,10 +24,9 @@ This file provides guidance to AI Agents such as Claude Code (claude.ai/code), O
 
 For anything beyond a trivial change:
 
-1. Use extended thinking (`think hard` / `ultrathink` for complex problems).
-2. Write a plan as a checklist — each task specifies: **files to change, what to do, how to verify, and done criteria**
-3. Save the plan to disk so it survives context resets
-4. Get approval before implementing
+1. Write a plan as a checklist — each task specifies: **files to change, what to do, how to verify, and done criteria**
+2. Save the plan to disk so it survives context resets
+3. Get approval before implementing
 
 **Size rules — where quality degrades:**
 
@@ -73,8 +71,6 @@ Before declaring anything complete:
 
 - **Keep AGENTS.md lean.** Overview in root, details in subdirectory AGENTS.md files. Use progressive disclosure.
 - **CLAUDE.md imports AGENTS.md.** Claude Code reads `CLAUDE.md`, not `AGENTS.md` — instructions belong in `AGENTS.md` only, so there is a single source.
-- **Use /clear between unrelated tasks.** Context drift is real.
-- **Use /compact with explicit keep instructions** when context gets heavy.
 - **Write state to disk**, not just conversation. Plans, decisions, and progress belong in files.
 - **Use subagents for research** — they run in their own context window and return only the distilled result.
 - **Use git log for context continuity** — recent commits are the cheapest way to restore context between sessions.

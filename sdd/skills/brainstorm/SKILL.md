@@ -53,6 +53,8 @@ Read the input. Quickly assess: is this vague, partially clear, or well-defined?
 
 If the project has a codebase, investigate what's relevant. Map existing architecture, find integration points, surface hidden complexity. Ground the conversation in reality.
 
+Glob `docs/learnings/**/*.md` and read frontmatter (category, tags, files) — skip silently if the directory doesn't exist. Open only learnings whose tags or files overlap the problem area, capped at 5, and surface anything relevant in the conversation itself rather than silently absorbing it — the user should see what history is informing the discussion.
+
 ### 2. Explore
 
 This is thinking time. Depending on what the user brings:
