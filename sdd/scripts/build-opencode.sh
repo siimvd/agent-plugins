@@ -8,8 +8,9 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
 REPO_ROOT="$(dirname "$PLUGIN_DIR")"
 OUT_DIR="$REPO_ROOT/.opencode/commands"
+AGENTS_OUT_DIR="$REPO_ROOT/.opencode/agents"
 
-mkdir -p "$OUT_DIR"
+mkdir -p "$OUT_DIR" "$AGENTS_OUT_DIR"
 
 # Helper: convert a skill to an OpenCode command
 # Usage: build_command <skill_dir> <output_name> <inline_files...>
@@ -72,6 +73,59 @@ build_command() {
 
   echo "Generated: $out_file"
 }
+
+# Helper: map an internal model alias to an OpenCode provider-qualified string
+map_model() {
+  case "$1" in
+    haiku) echo "anthropic/claude-haiku-4-5" ;;
+    sonnet) echo "anthropic/claude-sonnet-5" ;;
+    opus) echo "anthropic/claude-opus-5" ;;
+    *) echo "anthropic/$1" ;;
+  esac
+}
+
+# Helper: convert a plugin agent definition (sdd/agents/*.md) to an
+# OpenCode subagent (.opencode/agents/*.md). effort and maxTurns have no
+# OpenCode equivalent and are dropped with a comment naming them.
+# Usage: build_agent <agent_file>
+build_agent() {
+  local agent_file="$1"
+  local base_name out_file
+  base_name="$(basename "$agent_file" .md)"
+  out_file="$AGENTS_OUT_DIR/$base_name.md"
+
+  local description model effort max_turns disallowed mapped_model body
+  description=$(grep '^description:' "$agent_file" | head -1 | sed 's/^description: *//') || true
+  model=$(grep '^model:' "$agent_file" | head -1 | sed 's/^model: *//') || true
+  effort=$(grep '^effort:' "$agent_file" | head -1 | sed 's/^effort: *//') || true
+  max_turns=$(grep '^maxTurns:' "$agent_file" | head -1 | sed 's/^maxTurns: *//') || true
+  disallowed=$(grep '^disallowedTools:' "$agent_file" | head -1 | sed 's/^disallowedTools: *//') || true
+  mapped_model="$(map_model "$model")"
+  body=$(awk '/^---$/{n++; next} n>=2' "$agent_file")
+
+  {
+    echo "---"
+    echo "description: $description"
+    echo "mode: subagent"
+    echo "model: $mapped_model"
+    if [[ -n "$disallowed" ]]; then
+      echo "permission:"
+      [[ "$disallowed" == *"Edit"* ]] && echo "  edit: deny"
+      [[ "$disallowed" == *"Write"* ]] && echo "  write: deny"
+    fi
+    echo "---"
+    echo ""
+    echo "<!-- Dropped, no OpenCode equivalent: effort=$effort, maxTurns=$max_turns -->"
+    echo ""
+    echo "$body"
+  } > "$out_file"
+
+  echo "Generated: $out_file"
+}
+
+for agent_file in "$PLUGIN_DIR"/agents/*.md; do
+  build_agent "$agent_file"
+done
 
 # Build brainstorm command
 build_command \

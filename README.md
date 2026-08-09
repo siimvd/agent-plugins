@@ -10,12 +10,12 @@ setup → brainstorm → plan → build → review → finish
 
 | Command | Status | Description |
 |---------|--------|-------------|
-| `/sdd:setup` | v0.7.0 | Bootstrap SDD in a repo: AGENTS.md, CLAUDE.md import, directories, templates |
-| `/sdd:brainstorm` | v0.1.0 | Explore an idea collaboratively, produce a mini-PRD |
-| `/sdd:plan` | v0.2.0 | Convert mini-PRD or description to full spec + GitHub Issues |
-| `/sdd:build` | v0.3.0 | Autonomous spec execution with worktrees, commits, and PR |
-| `/sdd:review` | v0.5.0 | Review implementation or action existing review findings |
-| `/sdd:finish` | v0.4.0 | Verify review, merge PR, archive spec, compound learnings, cleanup |
+| `/sdd:setup` | v0.8.0 | Bootstrap SDD in a repo: AGENTS.md, CLAUDE.md import, directories, templates |
+| `/sdd:brainstorm` | v0.8.0 | Explore an idea collaboratively, produce a mini-PRD, informed by past learnings |
+| `/sdd:plan` | v0.8.0 | Convert mini-PRD or description to full spec + GitHub Issues, informed by past learnings |
+| `/sdd:build` | v0.8.0 | Autonomous spec execution — dispatches a tiered agent per task by default, with a 3-round fix loop |
+| `/sdd:review` | v0.8.0 | Review implementation or action existing review findings, via tiered dispatch |
+| `/sdd:finish` | v0.8.0 | Verify review, merge PR, archive spec, compound learnings (with retrievable frontmatter), cleanup |
 
 ## Installation
 
@@ -57,7 +57,7 @@ One-time command to bootstrap SDD in your repository. Creates or updates `AGENTS
 /sdd:brainstorm "your idea" --fast
 ```
 
-Explores an idea through conversation and produces a mini-PRD at `docs/ideas/<name>.md`.
+Explores an idea through conversation and produces a mini-PRD at `docs/ideas/<name>.md`. If `docs/learnings/` has entries whose tags or files overlap the problem area, surfaces them in the conversation.
 
 ### Plan
 
@@ -74,23 +74,27 @@ Produces a full spec at `docs/specs/<name>.md` with:
 - Ordered tasks (logical-unit level, with file paths and acceptance criteria)
 - GitHub Issues (epic + sub-issues per task)
 
+Consults `docs/learnings/` before writing the spec and states which learnings it used, or that none applied.
+
 ### Build
 
 ```
 /sdd:build <feature>
-/sdd:build <feature> --isolated-tasks
+/sdd:build <feature> --inline
 ```
 
 Reads `docs/specs/<name>.md` and executes all tasks autonomously in a 6-phase process:
 
 1. **Setup** — create worktree, branch, draft PR, mark epic in-progress
-2. **Execute** — TDD task loop with commits, issue updates, and adaptive reviews
+2. **Execute** — dispatches `sdd-implementer` per task by default, reviews each with `sdd-reviewer`, runs a 3-round fix loop on findings
 3. **Verify** — full test suite, lint, typecheck
 4. **Polish** — code simplification + security review via subagents
 5. **Ship** — update PR body, mark ready for review
 6. **Update** — comment on epic, show summary
 
-**`--isolated-tasks`**: dispatches a fresh subagent per task with clean context (same worktree, sequential execution). Use for large specs (8+ tasks) or when prior task context could confuse later tasks.
+Every dispatch goes to a tiered agent (`sdd/agents/`) with an explicit model, effort, and turn cap — never the session default at unbounded turns. Artifacts (diffs, specs, briefs) are always handed over as file paths, never pasted inline.
+
+**`--inline`**: implement every task in this session instead of dispatching. Use when tasks are tightly coupled enough that a fresh subagent would spend more turns re-deriving shared context than it saves.
 
 Must run in a **fresh session** — the spec file is complete context.
 
@@ -103,7 +107,7 @@ Must run in a **fresh session** — the spec file is complete context.
 
 Auto-detects mode based on PR state:
 
-- **Perform Mode** (no existing reviews): runs 4 parallel review agents — spec compliance, bug hunting, security, CLAUDE.md compliance. Posts prioritized findings as a PR comment.
+- **Perform Mode** (no existing reviews): writes the diff once, dispatches 4 parallel `sdd-reviewer` agents against that file — spec compliance, bug hunting, security, CLAUDE.md compliance. Posts prioritized findings as a PR comment.
 - **Action Mode** (unresolved review comments exist): reads findings from humans/AI agents, fixes P1 (critical) and P2 (high) automatically, replies in comment threads. Use `--all` to also fix P3 (low).
 
 Verifies before implementing — pushes back on technically incorrect suggestions with reasoning.
@@ -147,11 +151,24 @@ SDD's skills manage the agent's context — worktrees, dispatch, ledgers. Your o
 - **Use `/clear` between unrelated tasks.** Context drift is real; starting fresh after finishing a spec avoids carrying stale assumptions into the next one.
 - **Use `/compact` with explicit keep instructions** when a session gets long, so what survives is what you actually still need.
 
+## Agent Tiers
+
+Every subagent SDD dispatches resolves to a definition in `sdd/agents/`, not the session default:
+
+| Agent | Model | Effort | Turn cap | Tools |
+|-------|-------|--------|----------|-------|
+| `sdd-explorer` | haiku | low | 15 | read-only |
+| `sdd-implementer` | sonnet | medium | 40 | full |
+| `sdd-reviewer` | sonnet | high | 25 | read-only |
+| `sdd-final-reviewer` | opus | high | 30 | read-only |
+
+To override a tier for your own project, define an agent with the same name in your own `.claude/agents/` — it takes precedence over the plugin's.
+
 ## Portability
 
-The canonical source is the Claude Code plugin (`skills/*/SKILL.md`). The build script generates equivalent commands for other tools:
+The canonical source is the Claude Code plugin (`skills/*/SKILL.md`, `agents/*.md`). The build script generates equivalent output for other tools:
 
-- **OpenCode**: `scripts/build-opencode.sh` → `.opencode/commands/sdd-*.md`
+- **OpenCode**: `scripts/build-opencode.sh` → `.opencode/commands/sdd-*.md` and `.opencode/agents/sdd-*.md`. `effort`, `maxTurns`, and `isolation` have no OpenCode equivalent and are dropped, with a comment in the generated file naming what was lost.
 
 ## License
 

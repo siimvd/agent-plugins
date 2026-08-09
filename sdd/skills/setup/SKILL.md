@@ -143,8 +143,8 @@ mkdir -p docs/ideas
 Copy templates from the plugin into the repo if they don't already exist:
 
 Source templates (in the plugin repo):
-- `${CLAUDE_SKILL_DIR}/../../plan/spec-template.md` — the full spec template
-- `${CLAUDE_SKILL_DIR}/../../plan/references/task-writing-guide.md` — task writing reference
+- `${CLAUDE_SKILL_DIR}/../plan/spec-template.md` — the full spec template
+- `${CLAUDE_SKILL_DIR}/../plan/references/task-writing-guide.md` — task writing reference
 
 Also check for existing templates in `docs/specs/.templates/`:
 - `docs/specs/.templates/requirements.md`
