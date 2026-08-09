@@ -1,17 +1,17 @@
 # Subagent Prompt Templates
 
-Prompt templates for short-lived subagents spawned during the build phase.
+Prompt templates for short-lived subagents spawned during the build phase. Give every subagent a path to read, never pasted text — anything pasted stays resident in the orchestrator's context and is re-read on every later turn.
 
-## Investigation Subagent (Explore)
+## Investigation Subagent (sdd-explorer)
 
-Spawn before implementing a task that touches unfamiliar code.
+Spawn before implementing a task that touches unfamiliar code. Dispatch as `sdd-explorer` (see `sdd/agents/sdd-explorer.md`).
 
 ```
 Research this part of the codebase to prepare for implementation.
 DO NOT write any files. Read and search only.
 
-**Task context**: [paste task description from spec]
-**Files to investigate**: [paste file paths from task]
+**Task context**: read the task section from `docs/specs/<name>.md`.
+**Files to investigate**: the file paths listed in that task.
 
 **Questions**:
 1. What patterns does the existing code follow?
@@ -26,18 +26,22 @@ Return:
 - Recommended implementation approach
 ```
 
-## Code Review Subagent
+## Code Review Subagent (sdd-reviewer)
 
-Spawn after implementing a task that triggers an adaptive review.
+Spawn after implementing a task that triggers an adaptive review. Dispatch as `sdd-reviewer` (see `sdd/agents/sdd-reviewer.md`).
+
+Write the diff to a file first, then hand over the path:
+
+```bash
+git diff HEAD~1 > .sdd/task-diff.md
+```
 
 ```
 Review the changes for this task against the spec.
 
-**Spec requirements for this task**:
-[paste task section from spec including acceptance criteria]
+**Spec requirements for this task**: read the task section, including acceptance criteria, from `docs/specs/<name>.md`.
 
-**Changes to review**:
-[paste output of: git diff HEAD~1]
+**Changes to review**: read `.sdd/task-diff.md`.
 
 Check for:
 - Spec compliance — does the implementation match all acceptance criteria?
@@ -54,12 +58,17 @@ If no high-confidence issues found, say "No issues found."
 
 Spawn once at the end (Phase 4a), before PR goes to ready.
 
+Write the changed-file list to a file first, then hand over the path:
+
+```bash
+git diff --name-only main...HEAD > .sdd/branch-files.md
+```
+
 ```
 Review all files changed in this branch compared to main.
 Simplify code while preserving ALL existing functionality and tests.
 
-Files to review:
-[paste output of: git diff --name-only main...HEAD]
+Files to review: read `.sdd/branch-files.md`.
 
 Focus on:
 - Reducing nesting and cyclomatic complexity
@@ -81,13 +90,18 @@ Make the changes directly. Run tests after to verify nothing broke.
 
 ## Security Review Subagent
 
-Spawn once at the end (Phase 4b), before PR goes to ready.
+Spawn once at the end (Phase 4b), before PR goes to ready. This and the Code Simplifier prompt above are the two halves of `sdd-final-reviewer`'s scope (see `sdd/agents/sdd-final-reviewer.md`); dispatch as one call covering both, or keep them separate if the branch is large enough that separate turn budgets help.
+
+Write the changed-file list to a file first, then hand over the path (reuse `.sdd/branch-files.md` if the simplifier pass already wrote it):
+
+```bash
+git diff --name-only main...HEAD > .sdd/branch-files.md
+```
 
 ```
 Security review of all files changed in this branch.
 
-Files to review:
-[paste output of: git diff --name-only main...HEAD]
+Files to review: read `.sdd/branch-files.md`.
 
 Check for OWASP Top 10 vulnerabilities:
 - Injection (SQL, XSS, command injection, path traversal)
@@ -116,9 +130,7 @@ Spawn when a task creates or modifies database migrations.
 ```
 Analyze this database migration for safety.
 
-**Migration file**: [path to migration]
-**Migration SQL**:
-[paste migration content]
+**Migration file**: read it yourself at the path given in the task.
 
 Check for:
 - Is this migration reversible? If not, is that acceptable?
@@ -140,16 +152,16 @@ Recommend:
 Spawn per task when `--isolated-tasks` is specified. Each gets a clean context.
 
 ```
-Implement a single task from the spec below.
+Implement a single task from the spec.
 
-## Full Spec
-[paste entire spec file content]
+## Spec
+Read `docs/specs/<name>.md` yourself.
 
 ## Your Task
-[paste the specific task section]
+Task <N> in that spec — read its section, including acceptance criteria.
 
 ## Implementation Notes
-[paste the Implementation Notes section from spec]
+Also in the spec above — read the Implementation Notes section for test/lint commands.
 
 ## Instructions
 1. Read the reference files listed in your task
