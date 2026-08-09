@@ -10,7 +10,7 @@ setup → brainstorm → plan → build → review → finish
 
 | Command | Status | Description |
 |---------|--------|-------------|
-| `/sdd:setup` | v0.6.0 | Bootstrap SDD in a repo: AGENTS.md, directories, templates |
+| `/sdd:setup` | v0.7.0 | Bootstrap SDD in a repo: AGENTS.md, CLAUDE.md import, directories, templates |
 | `/sdd:brainstorm` | v0.1.0 | Explore an idea collaboratively, produce a mini-PRD |
 | `/sdd:plan` | v0.2.0 | Convert mini-PRD or description to full spec + GitHub Issues |
 | `/sdd:build` | v0.3.0 | Autonomous spec execution with worktrees, commits, and PR |
@@ -46,7 +46,7 @@ This creates `.opencode/commands/sdd-brainstorm.md`, `sdd-plan.md`, `sdd-build.m
 /sdd:setup
 ```
 
-One-time command to bootstrap SDD in your repository. Creates or updates `AGENTS.md` with best practices and SDD workflow instructions, sets up `docs/specs/`, `docs/ideas/`, and copies spec templates. Safe to run multiple times — skips what already exists.
+One-time command to bootstrap SDD in your repository. Creates or updates `AGENTS.md` with best practices and SDD workflow instructions, wires `CLAUDE.md` to import it (Claude Code reads `CLAUDE.md`, not `AGENTS.md`), creates `docs/specs/` and `docs/ideas/`, and copies spec templates. If either docs path is gitignored, it warns and offers a fix, since `/sdd:build` and `/sdd:finish` commit them. Safe to run multiple times — skips what already exists.
 
 ### Brainstorm
 

@@ -37,3 +37,4 @@ docs/
 - **GitHub Issues track progress** — `/sdd:plan` creates an epic + sub-issues; `/sdd:build` updates them
 - **Worktrees isolate work** — builds run in `.worktrees/<name>` to avoid disrupting your working tree
 - **Learnings compound** — `/sdd:finish` captures patterns, gotchas, and mistakes for future sessions
+- **Spec paths must be tracked by git** — `/sdd:build` and `/sdd:finish` commit `docs/specs/` and `docs/ideas/`; if either is gitignored, `/sdd:setup` offers to fix it

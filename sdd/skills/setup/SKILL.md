@@ -42,8 +42,10 @@ Check the current state of the repository:
 
 1. **Check AGENTS.md** — does it exist at the repo root?
 2. **Check for existing SDD section** — if AGENTS.md exists, search for `## SDD` or `## Spec Driven Development` to detect prior setup
-3. **Check directory structure** — do `docs/specs/`, `docs/ideas/`, `docs/specs/.templates/` exist?
-4. **Check templates** — do spec templates already exist in `docs/specs/.templates/`?
+3. **Check CLAUDE.md** — does it exist, and does it already contain an `@AGENTS.md` import?
+4. **Check directory structure** — do `docs/specs/`, `docs/ideas/`, `docs/specs/.templates/` exist?
+5. **Check templates** — do spec templates already exist in `docs/specs/.templates/`?
+6. **Check for gitignored spec paths** — run `git check-ignore -v docs/specs docs/ideas`; record any match and the rule that ignores it
 
 ### Phase 2: Preview
 
@@ -56,11 +58,28 @@ The following changes will be made:
 
 - [ ] Create AGENTS.md with best practices (or: AGENTS.md exists, will append SDD section)
 - [ ] Add SDD workflow section to AGENTS.md (or: SDD section already exists, skipping)
+- [ ] Create CLAUDE.md importing AGENTS.md (or: prepend the import; or: already wired up, skipping)
 - [ ] Create docs/specs/ directory
 - [ ] Create docs/ideas/ directory
 - [ ] Create docs/specs/.templates/ with spec templates
 
 Proceed? (y/n)
+```
+
+If Phase 1 found `docs/specs/` or `docs/ideas/` gitignored, show this warning before the checklist and confirm it separately from the "Proceed?" prompt:
+
+```
+⚠ docs/specs/ is excluded by .gitignore:5 (`docs/`)
+  /sdd:build and /sdd:finish commit spec files — those steps will fail.
+
+  A parent-directory exclusion can't be undone by a later negation
+  alone, so the rule must become:
+    - docs/
+    + docs/*
+    + !docs/ideas/
+    + !docs/specs/
+
+  Apply this .gitignore change? (y/n)
 ```
 
 Adjust the checklist based on what Phase 1 detected — only show items that will actually change. If everything is already set up, say so and stop.
@@ -71,7 +90,23 @@ Ask the user for confirmation before writing anything.
 
 Based on detection results, perform the needed actions:
 
-#### 3a. AGENTS.md
+#### 3a. CLAUDE.md
+
+Claude Code reads `CLAUDE.md`, not `AGENTS.md` — this import is what makes AGENTS.md load at session start.
+
+Three possible states:
+
+**No CLAUDE.md exists:**
+- Create `CLAUDE.md` at the repo root containing exactly: `@AGENTS.md`
+
+**CLAUDE.md exists without the import:**
+1. Read the existing `CLAUDE.md`
+2. Prepend `@AGENTS.md` followed by a blank line, preserving all existing content below it
+
+**CLAUDE.md exists with the import:**
+- Skip — already wired up
+
+#### 3b. AGENTS.md
 
 Three possible states:
 
@@ -88,7 +123,13 @@ Three possible states:
 **AGENTS.md exists with SDD section:**
 - Skip — already set up
 
-#### 3b. Directory Structure
+#### 3c. Gitignore
+
+Only if Phase 1 found a gitignored spec path and the user confirmed the Phase 2 warning. Otherwise skip silently.
+
+- Replace the offending rule (e.g. a blanket `docs/`) with `docs/*` plus `!docs/ideas/` and `!docs/specs/`
+
+#### 3d. Directory Structure
 
 Create directories if they don't exist:
 
@@ -97,7 +138,7 @@ mkdir -p docs/specs/.templates
 mkdir -p docs/ideas
 ```
 
-#### 3c. Spec Templates
+#### 3e. Spec Templates
 
 Copy templates from the plugin into the repo if they don't already exist:
 
@@ -121,8 +162,10 @@ Display what was done and the next step:
 
 ### Changes Made
 - Created AGENTS.md with best practices and SDD workflow instructions
+- Created CLAUDE.md importing AGENTS.md (Claude Code reads CLAUDE.md, not AGENTS.md)
 - Created docs/specs/ and docs/ideas/ directories
 - Added spec templates to docs/specs/.templates/
+- Gitignore: applied / declined / not needed (state which, only if Phase 1 found a gitignored path)
 
 ### Directory Structure
 docs/
@@ -146,7 +189,9 @@ docs/
 ## Guardrails
 
 - **Never overwrite existing content** — append to AGENTS.md, don't replace it. Skip files that already exist
+- **Never rewrite CLAUDE.md** — only prepend the `@AGENTS.md` import; existing content is never reordered or removed
 - **Idempotent** — safe to run multiple times. Detects existing state and skips what's already done
 - **No auto-commit** — the user decides when to commit the setup changes
 - **Ask before writing** — always show the preview and get confirmation
 - **Respect existing templates** — if the repo already has spec templates, don't overwrite them
+- **Never edit `.gitignore` without a separate confirmation, and never `git add -f`** — a gitignored path is excluded for a reason
