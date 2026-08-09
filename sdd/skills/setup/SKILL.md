@@ -42,8 +42,9 @@ Check the current state of the repository:
 
 1. **Check AGENTS.md** — does it exist at the repo root?
 2. **Check for existing SDD section** — if AGENTS.md exists, search for `## SDD` or `## Spec Driven Development` to detect prior setup
-3. **Check directory structure** — do `docs/specs/`, `docs/ideas/`, `docs/specs/.templates/` exist?
-4. **Check templates** — do spec templates already exist in `docs/specs/.templates/`?
+3. **Check CLAUDE.md** — does it exist, and if so does it already contain an `@AGENTS.md` import? Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so this is what makes the file above actually load
+4. **Check directory structure** — do `docs/specs/`, `docs/ideas/`, `docs/specs/.templates/` exist?
+5. **Check templates** — do spec templates already exist in `docs/specs/.templates/`?
 
 ### Phase 2: Preview
 
@@ -56,6 +57,7 @@ The following changes will be made:
 
 - [ ] Create AGENTS.md with best practices (or: AGENTS.md exists, will append SDD section)
 - [ ] Add SDD workflow section to AGENTS.md (or: SDD section already exists, skipping)
+- [ ] Create CLAUDE.md importing AGENTS.md (or: prepend the import; or: already wired up, skipping)
 - [ ] Create docs/specs/ directory
 - [ ] Create docs/ideas/ directory
 - [ ] Create docs/specs/.templates/ with spec templates
@@ -71,7 +73,23 @@ Ask the user for confirmation before writing anything.
 
 Based on detection results, perform the needed actions:
 
-#### 3a. AGENTS.md
+#### 3a. CLAUDE.md
+
+Claude Code reads `CLAUDE.md`, not `AGENTS.md` — this step is what makes the file above actually load at session start.
+
+Three possible states:
+
+**No CLAUDE.md exists:**
+1. Create `CLAUDE.md` at the repo root containing exactly: `@AGENTS.md`
+
+**CLAUDE.md exists without the import:**
+1. Read the existing `CLAUDE.md`
+2. Prepend `@AGENTS.md` followed by a blank line, preserving all existing content below it
+
+**CLAUDE.md exists with the import:**
+- Skip — already wired up
+
+#### 3b. AGENTS.md
 
 Three possible states:
 
@@ -88,7 +106,7 @@ Three possible states:
 **AGENTS.md exists with SDD section:**
 - Skip — already set up
 
-#### 3b. Directory Structure
+#### 3c. Directory Structure
 
 Create directories if they don't exist:
 
@@ -97,7 +115,7 @@ mkdir -p docs/specs/.templates
 mkdir -p docs/ideas
 ```
 
-#### 3c. Spec Templates
+#### 3d. Spec Templates
 
 Copy templates from the plugin into the repo if they don't already exist:
 
@@ -121,6 +139,7 @@ Display what was done and the next step:
 
 ### Changes Made
 - Created AGENTS.md with best practices and SDD workflow instructions
+- Created CLAUDE.md importing AGENTS.md (Claude Code reads CLAUDE.md, not AGENTS.md)
 - Created docs/specs/ and docs/ideas/ directories
 - Added spec templates to docs/specs/.templates/
 
@@ -146,6 +165,7 @@ docs/
 ## Guardrails
 
 - **Never overwrite existing content** — append to AGENTS.md, don't replace it. Skip files that already exist
+- **Never rewrite CLAUDE.md** — only prepend the `@AGENTS.md` import; existing content is never reordered or removed
 - **Idempotent** — safe to run multiple times. Detects existing state and skips what's already done
 - **No auto-commit** — the user decides when to commit the setup changes
 - **Ask before writing** — always show the preview and get confirmation
