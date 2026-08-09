@@ -76,6 +76,13 @@ Parse `$ARGUMENTS` for:
 - Default: always research
 - `--fast`: skip parallel agents, do a single quick scan. Still research if the change touches unfamiliar parts of the codebase
 
+**Learnings retrieval** (before dispatching research threads — no subagent needed, this is cheap):
+
+1. If `docs/learnings/` doesn't exist, skip silently — no error, no output
+2. Otherwise glob `docs/learnings/**/*.md` and read only each file's frontmatter (category, tags, files)
+3. Open only the learnings whose tags or files overlap this change, capped at 5
+4. State which learnings informed the plan, or "No relevant learnings found" if none matched — feed anything used into the spec's Risks or Patterns to Follow sections
+
 **Research threads** (dispatch as parallel Explore subagents):
 
 | Thread | What It Does |
