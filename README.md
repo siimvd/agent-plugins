@@ -140,6 +140,13 @@ Merges PR if approved but not yet merged (asks first). Warns on unresolved revie
 | Finish | Learnings | `docs/learnings/<category>/<name>.md` |
 | Finish | Closed Issues | Epic + sub-issues closed |
 
+## Managing Your Own Session
+
+SDD's skills manage the agent's context — worktrees, dispatch, ledgers. Your own conversation is a separate thing to manage:
+
+- **Use `/clear` between unrelated tasks.** Context drift is real; starting fresh after finishing a spec avoids carrying stale assumptions into the next one.
+- **Use `/compact` with explicit keep instructions** when a session gets long, so what survives is what you actually still need.
+
 ## Portability
 
 The canonical source is the Claude Code plugin (`skills/*/SKILL.md`). The build script generates equivalent commands for other tools:

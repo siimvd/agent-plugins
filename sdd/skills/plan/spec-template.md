@@ -132,6 +132,8 @@ Tasks are ordered by dependency. Each task is a logical unit that results in one
 - [ ] [Verifiable criterion 2]
 - [ ] Tests cover: [specific scenarios]
 
+**Must not modify**: [paths a shortcut fix could hollow out instead of fixing — omit if there's no plausible shortcut]
+
 **Commit**: `feat(<scope>): <description>`
 
 ---

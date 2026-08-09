@@ -33,6 +33,8 @@ Every task follows this structure:
 - [ ] [Verifiable criterion 2]
 - [ ] Tests cover: [specific scenarios]
 
+**Must not modify**: [paths a fix could hollow out instead of fixing — omit if there's no plausible shortcut]
+
 **Commit**: `feat(<scope>): <description>`
 ```
 
@@ -49,6 +51,12 @@ Every task follows this structure:
 - Include specific test scenarios, not "tests pass"
 - Good: "Tests cover: valid input, missing required field, unauthorized access"
 - Bad: "Tests are written"
+- **Must close the obvious shortcut.** A criterion satisfiable by changing the check instead of the code isn't a criterion:
+  - Bad: "tests pass" — invites editing the test to match broken behavior
+  - Good: "tests pass without modifying anything under `tests/`"
+  - Bad: "the function returns the correct value" — invites hardcoding the expected output
+  - Good: "the function returns the correct value for at least 3 inputs not present in the test fixtures"
+- Add a **Must not modify** field listing the paths the shortcut would touch, whenever one is plausible
 
 ### Dependencies
 - Tasks are ordered by dependency
