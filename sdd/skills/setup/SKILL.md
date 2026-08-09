@@ -45,6 +45,7 @@ Check the current state of the repository:
 3. **Check CLAUDE.md** — does it exist, and if so does it already contain an `@AGENTS.md` import? Claude Code reads `CLAUDE.md`, not `AGENTS.md`, so this is what makes the file above actually load
 4. **Check directory structure** — do `docs/specs/`, `docs/ideas/`, `docs/specs/.templates/` exist?
 5. **Check templates** — do spec templates already exist in `docs/specs/.templates/`?
+6. **Check for gitignored spec paths** — run `git check-ignore -v docs/specs docs/ideas`; record any match and the rule that ignores it
 
 ### Phase 2: Preview
 
@@ -63,6 +64,22 @@ The following changes will be made:
 - [ ] Create docs/specs/.templates/ with spec templates
 
 Proceed? (y/n)
+```
+
+If Phase 1 found `docs/specs/` or `docs/ideas/` gitignored, show this warning before the checklist above, and ask for it to be confirmed separately from the main "Proceed?" prompt:
+
+```
+⚠ docs/specs/ is excluded by .gitignore:5 (`docs/`)
+  /sdd:build and /sdd:finish commit spec files — those steps will fail.
+
+  A parent-directory exclusion can't be undone by a later negation
+  alone, so the rule must become:
+    - docs/
+    + docs/*
+    + !docs/ideas/
+    + !docs/specs/
+
+  Apply this .gitignore change? (y/n)
 ```
 
 Adjust the checklist based on what Phase 1 detected — only show items that will actually change. If everything is already set up, say so and stop.
@@ -106,7 +123,14 @@ Three possible states:
 **AGENTS.md exists with SDD section:**
 - Skip — already set up
 
-#### 3c. Directory Structure
+#### 3c. Gitignore
+
+Only runs if Phase 1 found a gitignored spec path and the user confirmed the Phase 2 warning separately. Skip silently otherwise.
+
+1. Replace the offending rule (e.g. a blanket `docs/`) with `docs/*` plus `!docs/ideas/` and `!docs/specs/`
+2. Never use `git add -f` to bypass the rule instead of fixing it
+
+#### 3d. Directory Structure
 
 Create directories if they don't exist:
 
@@ -115,7 +139,7 @@ mkdir -p docs/specs/.templates
 mkdir -p docs/ideas
 ```
 
-#### 3d. Spec Templates
+#### 3e. Spec Templates
 
 Copy templates from the plugin into the repo if they don't already exist:
 
@@ -142,6 +166,7 @@ Display what was done and the next step:
 - Created CLAUDE.md importing AGENTS.md (Claude Code reads CLAUDE.md, not AGENTS.md)
 - Created docs/specs/ and docs/ideas/ directories
 - Added spec templates to docs/specs/.templates/
+- Gitignore: applied / declined / not needed (state which, only if Phase 1 found a gitignored path)
 
 ### Directory Structure
 docs/
@@ -170,3 +195,4 @@ docs/
 - **No auto-commit** — the user decides when to commit the setup changes
 - **Ask before writing** — always show the preview and get confirmation
 - **Respect existing templates** — if the repo already has spec templates, don't overwrite them
+- **Never edit `.gitignore` without a separate confirmation, and never `git add -f`** — a gitignored path is excluded for a reason
