@@ -36,7 +36,7 @@ For anything beyond a trivial change:
 | ----------- | --------------------------------- |
 | Single task | < 200 lines changed               |
 | Plan        | 5-8 tasks max (split beyond that) |
-| AGENTS.md   | < 300 lines (shorter is better)   |
+| AGENTS.md / CLAUDE.md | target under 200 lines each (Anthropic's documented threshold) |
 | Single PR   | < 500 lines (human-reviewable)    |
 
 **Anti-overengineering:**
@@ -72,6 +72,7 @@ Before declaring anything complete:
 ## CONTEXT MANAGEMENT
 
 - **Keep AGENTS.md lean.** Overview in root, details in subdirectory AGENTS.md files. Use progressive disclosure.
+- **CLAUDE.md imports AGENTS.md.** Claude Code reads `CLAUDE.md`, not `AGENTS.md` — instructions belong in `AGENTS.md` only, so there is a single source.
 - **Use /clear between unrelated tasks.** Context drift is real.
 - **Use /compact with explicit keep instructions** when context gets heavy.
 - **Write state to disk**, not just conversation. Plans, decisions, and progress belong in files.
