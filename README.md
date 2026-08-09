@@ -168,7 +168,7 @@ To override a tier for your own project, define an agent with the same name in y
 
 The canonical source is the Claude Code plugin (`skills/*/SKILL.md`, `agents/*.md`). The build script generates equivalent output for other tools:
 
-- **OpenCode**: `scripts/build-opencode.sh` → `.opencode/commands/sdd-*.md` and `.opencode/agents/sdd-*.md`. `effort`, `maxTurns`, and `isolation` have no OpenCode equivalent and are dropped, with a comment in the generated file naming what was lost.
+- **OpenCode**: `scripts/build-opencode.sh` → `.opencode/commands/sdd-*.md` and `.opencode/agents/sdd-*.md`. `effort` and `maxTurns` have no OpenCode equivalent and are dropped, with a comment in the generated file naming what was lost.
 
 ## License
 

@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Generates .opencode/commands/ from canonical Claude Code skills.
+# Generates .opencode/commands/ and .opencode/agents/ from the canonical
+# Claude Code skills and agent definitions.
 # Run from the repo root: ./sdd/scripts/build-opencode.sh
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -74,6 +75,12 @@ build_command() {
   echo "Generated: $out_file"
 }
 
+# Helper: read the first value of a single-line frontmatter field, empty if absent
+# Usage: frontmatter_field <file> <field>
+frontmatter_field() {
+  grep -m1 "^$2:" "$1" | sed "s/^$2: *//" || true
+}
+
 # Helper: map an internal model alias to an OpenCode provider-qualified string
 map_model() {
   case "$1" in
@@ -94,24 +101,23 @@ build_agent() {
   base_name="$(basename "$agent_file" .md)"
   out_file="$AGENTS_OUT_DIR/$base_name.md"
 
-  local description model effort max_turns disallowed mapped_model body
-  description=$(grep '^description:' "$agent_file" | head -1 | sed 's/^description: *//') || true
-  model=$(grep '^model:' "$agent_file" | head -1 | sed 's/^model: *//') || true
-  effort=$(grep '^effort:' "$agent_file" | head -1 | sed 's/^effort: *//') || true
-  max_turns=$(grep '^maxTurns:' "$agent_file" | head -1 | sed 's/^maxTurns: *//') || true
-  disallowed=$(grep '^disallowedTools:' "$agent_file" | head -1 | sed 's/^disallowedTools: *//') || true
-  mapped_model="$(map_model "$model")"
+  local description model effort max_turns disallowed_tools body
+  description=$(frontmatter_field "$agent_file" description)
+  model=$(frontmatter_field "$agent_file" model)
+  effort=$(frontmatter_field "$agent_file" effort)
+  max_turns=$(frontmatter_field "$agent_file" maxTurns)
+  disallowed_tools=$(frontmatter_field "$agent_file" disallowedTools)
   body=$(awk '/^---$/{n++; next} n>=2' "$agent_file")
 
   {
     echo "---"
     echo "description: $description"
     echo "mode: subagent"
-    echo "model: $mapped_model"
-    if [[ -n "$disallowed" ]]; then
+    echo "model: $(map_model "$model")"
+    if [[ -n "$disallowed_tools" ]]; then
       echo "permission:"
-      [[ "$disallowed" == *"Edit"* ]] && echo "  edit: deny"
-      [[ "$disallowed" == *"Write"* ]] && echo "  write: deny"
+      [[ "$disallowed_tools" == *"Edit"* ]] && echo "  edit: deny"
+      [[ "$disallowed_tools" == *"Write"* ]] && echo "  write: deny"
     fi
     echo "---"
     echo ""

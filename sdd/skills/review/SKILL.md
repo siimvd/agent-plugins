@@ -57,7 +57,7 @@ Perform a comprehensive code review when no existing review needs actioning.
 
 ### Step 2: Launch Review Agents
 
-Spawn 4 parallel review subagents, each dispatched as `sdd-reviewer` (see `sdd/agents/sdd-reviewer.md`). Give each the `.sdd/review-diff.md` path and its focus area — never paste the diff or spec content into the prompt. Anything pasted into a dispatch stays resident in the orchestrator's context and is re-read on every later turn; a path costs nothing until the subagent chooses to read it.
+Spawn 4 parallel review subagents, each dispatched as `sdd-reviewer` (see `sdd/agents/sdd-reviewer.md`). Give each the `.sdd/review-diff.md` path and its focus area — never paste the diff or spec content into the prompt. Pasted text stays resident in the orchestrator's context and is re-read on every later turn; a path costs nothing until the subagent reads it.
 
 #### Agent 1: Spec Compliance
 

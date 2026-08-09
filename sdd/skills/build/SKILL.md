@@ -27,7 +27,7 @@ This is the third step of the SDD workflow: **brainstorm -> plan -> build -> rev
 
 Parse `$ARGUMENTS` for:
 - `<name>` — matches a `docs/specs/<name>.md` spec file
-- `--inline` — implement every task in this session instead of dispatching a fresh `sdd-implementer` per task; use when tasks are tightly coupled enough that a fresh subagent would spend more turns re-deriving shared context than it saves
+- `--inline` — implement every task in this session instead of dispatching a fresh `sdd-implementer` per task (see `--inline Mode` below)
 
 ---
 
@@ -104,7 +104,7 @@ gh issue comment <epic> --body "Build started. Draft PR: #<pr>"
 
 ### Phase 2: Execute
 
-Dispatch one task at a time to `sdd-implementer` (see `sdd/agents/sdd-implementer.md`). Never dispatch implementers in parallel — that risks worktree conflicts. Use `--inline` mode instead when tasks are too coupled for this to make sense (see `--inline Mode` below).
+Dispatch one task at a time to `sdd-implementer` (see `sdd/agents/sdd-implementer.md`). Never dispatch implementers in parallel — that risks worktree conflicts. For tightly coupled tasks, use `--inline` mode instead (see below).
 
 #### Task Dispatch Loop
 
@@ -114,17 +114,17 @@ For each task in dependency order:
 
 **2. RECORD BASE** — `BASE=$(git rev-parse HEAD)`. Never substitute `HEAD~1` later — it silently drops all but the last commit of a multi-commit task.
 
-**3. DISPATCH** `sdd-implementer` with the task's full text and acceptance criteria, its reference files, interfaces produced by earlier tasks it consumes, and a report path (`.sdd/task-<n>-report.md`). Never paste the whole spec — the implementer reads `docs/specs/<name>.md` itself if it needs more.
+**3. DISPATCH** `sdd-implementer` with the task's full text and acceptance criteria, its reference files, interfaces produced by earlier tasks it consumes, and a report path (`.sdd/task-<N>-report.md`). Never paste the whole spec — the implementer reads `docs/specs/<name>.md` itself if it needs more.
 
 **4. HANDLE STATUS** — `DONE`: continue to review. `DONE_WITH_CONCERNS`: address correctness concerns before reviewing, note observations and continue. `NEEDS_CONTEXT`: provide it, re-dispatch. `BLOCKED`: assess whether it needs more context, a tier bump, or is a genuine spec problem to escalate.
 
 **5. REVIEW** — write the diff once, dispatch `sdd-reviewer` (see `sdd/agents/sdd-reviewer.md`):
 ```bash
-git diff $BASE...HEAD > .sdd/task-diff.md
+mkdir -p .sdd && git diff $BASE...HEAD > .sdd/task-diff.md
 ```
 Give it the diff path and the task's acceptance criteria. Check risk signals against `${CLAUDE_SKILL_DIR}/references/review-triggers.md` for whether a security- or migration-focused pass is also warranted.
 
-**6. FIX LOOP** if the review finds anything above trivial (see below); otherwise skip to step 7.
+**6. FIX LOOP** — run it if the review finds anything above trivial (see below).
 
 **7. COMMIT + PUSH** — stage only this task's files, commit with the task's message, push.
 
