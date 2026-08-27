@@ -179,23 +179,19 @@ Run full validation suite. Evidence before claims.
 
 ### Phase 4: Polish
 
-Run once over all changes, before PR goes to ready.
+Run once over all changes, before PR goes to ready. Both passes dispatch `sdd-final-reviewer` (see `sdd/agents/sdd-final-reviewer.md`) — it's read-only, so it reports findings and the orchestrator applies them, not the other way around.
 
 #### 4a. Code Simplification
 
-Spawn a code-simplifier subagent (see `${CLAUDE_SKILL_DIR}/references/agent-prompts.md` for prompt).
+Write `.sdd/branch-files.md` and dispatch with the simplifier prompt (see `${CLAUDE_SKILL_DIR}/references/agent-prompts.md`). Focus: reduce complexity, eliminate redundancy, improve naming, preserve all functionality.
 
-Focus: files changed in this branch vs main. Reduce complexity, eliminate redundancy, improve naming. Preserve all functionality.
-
-If changes made: run tests, commit as `refactor(<scope>): simplify implementation`.
+If it reports changes: apply them, run tests, commit as `refactor(<scope>): simplify implementation`.
 
 #### 4b. Security Review
 
-Spawn a security review subagent (see `${CLAUDE_SKILL_DIR}/references/agent-prompts.md` for prompt).
+Dispatch again with the security prompt, reusing `.sdd/branch-files.md`. Focus: OWASP Top 10 on changed files, HIGH and CRITICAL only.
 
-Focus: OWASP Top 10 on changed files. Report HIGH and CRITICAL only.
-
-If critical issues found: fix, test, commit as `fix(<scope>): address security review findings`.
+If critical issues found: apply the fix, test, commit as `fix(<scope>): address security review findings`.
 
 ---
 
