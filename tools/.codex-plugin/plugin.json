@@ -1,0 +1,31 @@
+{
+  "name": "tools",
+  "version": "0.1.0",
+  "description": "Standalone developer utility skills, independent of the SDD workflow",
+  "author": {
+    "name": "Siim Viidu"
+  },
+  "homepage": "https://github.com/siimvd/agent-plugins",
+  "repository": "https://github.com/siimvd/agent-plugins",
+  "license": "MIT",
+  "keywords": [
+    "developer-tools",
+    "utilities"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Tools",
+    "shortDescription": "Standalone developer utilities",
+    "longDescription": "Standalone developer utility skills, independent of the SDD workflow. Currently a scaffold with no skills yet.",
+    "developerName": "Siim Viidu",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Show me the available tools."
+    ]
+  }
+}

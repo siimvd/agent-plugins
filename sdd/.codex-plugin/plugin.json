@@ -1,0 +1,36 @@
+{
+  "name": "sdd",
+  "version": "0.8.0",
+  "description": "Spec Driven Development workflow: setup, brainstorm, plan, build, review, finish",
+  "author": {
+    "name": "Siim Viidu"
+  },
+  "homepage": "https://github.com/siimvd/agent-plugins",
+  "repository": "https://github.com/siimvd/agent-plugins",
+  "license": "MIT",
+  "keywords": [
+    "spec-driven-development",
+    "planning",
+    "workflow",
+    "code-review",
+    "brainstorming"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "SDD",
+    "shortDescription": "Spec Driven Development workflow",
+    "longDescription": "Setup, brainstorm, plan, build, review, and finish structured feature development from a written spec through to a merged PR.",
+    "developerName": "Siim Viidu",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "I've got a feature idea to explore.",
+      "Plan this feature into a spec.",
+      "Build the spec."
+    ]
+  }
+}
