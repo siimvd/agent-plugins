@@ -144,8 +144,8 @@ When the problem space is understood, present 2-3 distinct approaches:
 When thinking crystallizes, offer to capture it as a mini-PRD. Don't auto-capture — ask first.
 
 Write to `docs/ideas/<short-name>.md` using the template at `${CLAUDE_SKILL_DIR}/mini-prd-template.md`.
-(`${CLAUDE_SKILL_DIR}` is this skill's own directory — Claude Code substitutes it automatically;
-on a tool that doesn't, resolve it yourself as this skill's directory, using this file's known
+(`${CLAUDE_SKILL_DIR}` is this skill's own directory, substituted automatically by Claude Code.
+On a tool that doesn't, resolve it yourself as this skill's directory, using this file's known
 location.)
 
 Derive `<short-name>` from the idea: lowercase, hyphenated, 2-4 words (e.g., `notification-preferences`, `auth-flow`).

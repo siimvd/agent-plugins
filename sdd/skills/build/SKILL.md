@@ -123,8 +123,8 @@ For each task in dependency order:
 mkdir -p .sdd && git diff $BASE...HEAD > .sdd/task-diff.md
 ```
 Give it the diff path and the task's acceptance criteria. Check risk signals against `${CLAUDE_SKILL_DIR}/references/review-triggers.md` for whether a security- or migration-focused pass is also warranted.
-(`${CLAUDE_SKILL_DIR}` is this skill's own directory — Claude Code substitutes it automatically;
-on a tool that doesn't, resolve it yourself as this skill's directory, using this file's known
+(`${CLAUDE_SKILL_DIR}` is this skill's own directory, substituted automatically by Claude Code.
+On a tool that doesn't, resolve it yourself as this skill's directory, using this file's known
 location.)
 
 **6. FIX LOOP** — run it if the review finds anything above trivial (see below).
