@@ -9,10 +9,21 @@ verified, but no skills have been added yet. Installing it today gives you nothi
 
 ## Installation
 
+**Claude Code:**
 ```
 /plugin marketplace add siimvd/agent-plugins
 /plugin install tools@agent-plugins
 ```
+
+**Codex CLI / ChatGPT desktop** (same runtime, one install covers both):
+```
+codex plugin marketplace add siimvd/agent-plugins
+codex plugin add tools@agent-plugins
+```
+
+**OpenCode:** run `./tools/scripts/build-opencode.sh` from a checkout of this repo — see
+OpenCode portability below. There is no distributable install for OpenCode users outside this
+repo yet.
 
 ## Adding a skill
 
@@ -21,10 +32,14 @@ verified, but no skills have been added yet. Installing it today gives you nothi
    phrases, not a summary — see any skill under `sdd/skills/` for the house style.
 2. Put supporting files alongside it and reference them as
    `${CLAUDE_SKILL_DIR}/references/<file>.md`. Keep `SKILL.md` itself short and load detail
-   progressively; the reference files are inlined for OpenCode automatically.
+   progressively; the reference files are inlined for OpenCode automatically. Claude Code
+   substitutes `${CLAUDE_SKILL_DIR}` automatically; Codex and OpenCode don't, so add a one-line
+   fallback note after the first reference telling a model how to resolve it itself — see any
+   skill under `sdd/skills/` for the pattern.
 3. Delete `tools/skills/.gitkeep` once the first real skill lands.
-4. Bump the version in **both** `tools/.claude-plugin/plugin.json` and the `tools` entry in
-   `.claude-plugin/marketplace.json`. Lint fails if the two disagree.
+4. Bump the version in `tools/.claude-plugin/plugin.json`, `tools/.codex-plugin/plugin.json`, and
+   the `tools` entry in both `.claude-plugin/marketplace.json` and
+   `.agents/plugins/marketplace.json`. Lint fails if any of the four disagree.
 5. Run the lint and the build:
 
 ```bash
@@ -32,7 +47,9 @@ bash sdd/scripts/lint.sh
 ./tools/scripts/build-opencode.sh
 ```
 
-The skill becomes `/tools:<name>` in Claude Code.
+The skill becomes `/tools:<name>` in Claude Code, and `$tools:<name>` (or the `@` picker in
+ChatGPT) in Codex — Codex namespaces plugin skills as `<plugin>:<skill>`, identically to Claude
+Code.
 
 ## Adding an agent
 
@@ -57,8 +74,16 @@ to inline by reading each skill's own `${CLAUDE_SKILL_DIR}` references. A new sk
 edit to the build script. Run against an empty plugin it reports that there is nothing to
 build and exits 0.
 
-`effort` and `maxTurns` have no OpenCode equivalent and are dropped, with an HTML comment in
-the generated file naming what was lost.
+`maxTurns` maps to OpenCode's documented `steps` field. `effort` has no verified equivalent for
+Anthropic models and is dropped, with an HTML comment in the generated file naming what was lost
+and why.
+
+## Codex / ChatGPT portability
+
+`tools/.codex-plugin/plugin.json` is the manifest; no build step — Codex reads
+`skills/*/SKILL.md` directly, so a new skill needs no regeneration. `tools/agents/*.md` is not
+read by Codex; it only reads `skills/<skill>/agents/openai.yaml` inside a skill, for display
+metadata, not dispatch.
 
 ## License
 

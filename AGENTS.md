@@ -144,6 +144,14 @@ docs/
 - **Worktrees isolate work** — builds run in `.worktrees/<name>` to avoid disrupting your working tree
 - **Learnings compound** — `/sdd:finish` captures patterns, gotchas, and mistakes for future sessions
 
+### Portability
+
+`/sdd:*` is Claude Code's invocation syntax. Working in Codex CLI or the ChatGPT desktop app, use
+`$sdd:plan` (or the `@` skill picker) — same skill, different prefix. See the root
+[README.md](./README.md#installation) for the full per-tool install matrix and known limits
+(OpenCode has no consumer install path yet; Codex doesn't read `sdd/agents/*.md`'s tiered
+dispatch).
+
 ---
 
 ## QUICK MODE (Small Tasks)

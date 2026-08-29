@@ -7,6 +7,9 @@ Opinionated plugins for AI coding tools.
 | `sdd` | 0.8.0 | Spec Driven Development workflow — the rest of this README |
 | [`tools`](./tools/README.md) | 0.1.0 | Standalone developer utilities. Scaffold; no skills yet |
 
+Works in Claude Code, Codex CLI, and the ChatGPT desktop app natively; OpenCode via a generated
+build step. See Installation and Portability below for exact commands and per-tool limits.
+
 ---
 
 # sdd — Spec Driven Development
@@ -42,6 +45,32 @@ From within Claude Code, add the marketplace and install the plugin:
 `tools` installs the same way (`/plugin install tools@agent-plugins`), but it is still an
 empty scaffold — see [tools/README.md](./tools/README.md).
 
+### Codex CLI / ChatGPT desktop
+
+Codex CLI and the ChatGPT desktop app share the same plugin runtime — one install covers both:
+
+```
+codex plugin marketplace add siimvd/agent-plugins
+codex plugin add sdd@agent-plugins
+codex plugin add tools@agent-plugins
+```
+
+Codex namespaces plugin skills as `<plugin>:<skill>`. Invoke with `$sdd:plan` in Codex CLI, or
+pick from the `@` skill picker in ChatGPT — names match Claude Code's `/sdd:plan` exactly.
+
+Verified end-to-end with `codex-cli 0.150.1`: both plugins install cleanly from this repo, and the
+model-visible skill list shows `sdd:brainstorm`, `sdd:build`, `sdd:plan`, `sdd:review`,
+`sdd:setup`, `sdd:finish` (`tools` correctly contributes none). This installs the marketplace
+directly from GitHub — the plugins are not submitted to OpenAI's public plugin directory.
+
+**What doesn't come along**: `sdd/agents/*.md` — the tiered-dispatch definitions `/sdd:build`
+reads for its per-task agent tiers — are Claude-Code-specific and not read by Codex. Codex only
+reads `skills/<skill>/agents/openai.yaml` inside a skill, which is presentation metadata (display
+name, icon), not a dispatch definition. Codex does have its own subagent delegation
+(`spawn_agent`, with `model` and `reasoning_effort` parameters), but `/sdd:build`'s dispatch
+instructions are written for Claude Code's agent tiers and haven't been adapted to it — so
+`/sdd:build` under Codex runs without the tiered dispatch, not with an equivalent one.
+
 ### OpenCode CLI
 
 Generate the OpenCode command from the canonical skill:
@@ -51,6 +80,10 @@ Generate the OpenCode command from the canonical skill:
 ```
 
 This creates `.opencode/commands/sdd-brainstorm.md`, `sdd-plan.md`, `sdd-build.md`, `sdd-review.md`, and `sdd-finish.md` in the repo root.
+
+This only helps someone working inside a checkout of *this* repo — `.opencode/` is gitignored
+build output, not a distributable install. There is currently no consumer install path for
+OpenCode users outside this repo; see Known Limits below.
 
 ## Usage
 
@@ -180,11 +213,40 @@ To override a tier for your own project, define an agent with the same name in y
 
 ## Portability
 
-The canonical source is the Claude Code plugin (`skills/*/SKILL.md`, `agents/*.md`). The build script generates equivalent output for other tools:
+The canonical source is the Claude Code plugin (`skills/*/SKILL.md`, `agents/*.md`), read directly
+by Codex and ChatGPT, plus a build script that generates equivalent output for tools that don't
+read the source format natively:
 
-- **OpenCode**: `scripts/build-opencode.sh` → `.opencode/commands/sdd-*.md` and `.opencode/agents/sdd-*.md`. `effort` and `maxTurns` have no OpenCode equivalent and are dropped, with a comment in the generated file naming what was lost.
+- **Codex / ChatGPT**: `.codex-plugin/plugin.json` per plugin, catalogued in
+  `.agents/plugins/marketplace.json` at the repo root. No build step — Codex reads
+  `skills/*/SKILL.md` directly. See Installation above for commands and what doesn't port.
+- **OpenCode**: `scripts/build-opencode.sh` → `.opencode/commands/sdd-*.md` and
+  `.opencode/agents/sdd-*.md`. `maxTurns` maps to OpenCode's documented `steps` field. `effort` has
+  no verified equivalent for the Anthropic models these agents use (OpenCode's provider-parameter
+  passthrough is documented for OpenAI reasoning models, not Anthropic's) and is dropped, with a
+  comment in the generated file naming what was lost and why.
 
-Each plugin owns its own build script. `tools/scripts/build-opencode.sh` does the same job for `tools`, discovering skills and inline files instead of listing them.
+Each plugin owns its own build script. `tools/scripts/build-opencode.sh` does the same job for
+`tools`, discovering skills and inline files instead of listing them.
+
+Skill-internal file references use Claude Code's `${CLAUDE_SKILL_DIR}` and `${CLAUDE_PLUGIN_ROOT}`
+variables, which Claude Code substitutes automatically. Codex and OpenCode don't substitute them,
+so each reference carries a one-line fallback instruction for a model to resolve it itself.
+Verified live on Claude Code 2.1.251 that a bare relative path — the alternative — fails on first
+read and only recovers by the model guessing the real location, so the variables are kept rather
+than replaced.
+
+## Known Limits
+
+- **No OpenCode consumer install.** `build-opencode.sh` output only helps someone working inside
+  this repo. OpenCode discovers skills only at fixed paths with no configurable directory; a
+  distributable install would need an OpenCode JS plugin (the pattern `obra/superpowers` uses:
+  `"plugin": ["name@git+https://..."]` in `opencode.json`), which does not exist here yet.
+- **Codex doesn't read `sdd/agents/*.md`.** See the Codex section under Installation — the tiered
+  dispatch `/sdd:build` relies on is Claude-Code-specific and has no Codex port yet, even though
+  Codex has its own (differently-shaped) subagent delegation.
+- **No public directory listing.** Both marketplaces install directly from this GitHub repo.
+  Neither plugin is submitted to Anthropic's or OpenAI's public plugin directories.
 
 ## Linting
 
@@ -192,7 +254,7 @@ Each plugin owns its own build script. `tools/scripts/build-opencode.sh` does th
 bash sdd/scripts/lint.sh
 ```
 
-Structural lint for every plugin registered in `.claude-plugin/marketplace.json` — frontmatter shape, `${CLAUDE_SKILL_DIR}` references, leftover paste markers, required agent fields, per-plugin version agreement between `plugin.json` and the marketplace entry, and build determinism. It checks structure, not behavior.
+Structural lint for every plugin registered in `.claude-plugin/marketplace.json` — frontmatter shape, `${CLAUDE_SKILL_DIR}`/`${CLAUDE_PLUGIN_ROOT}` references, leftover paste markers, required agent fields, per-plugin version agreement between `plugin.json` and both the Claude Code and Codex marketplace entries, Codex marketplace membership, and build determinism. When Codex's own bundled validator is installed locally, lint runs it against every plugin too. It checks structure, not behavior.
 
 ## License
 
