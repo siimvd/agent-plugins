@@ -109,7 +109,7 @@ Each cycle should make the next cycle easier — not harder.
 
 ## Spec Driven Development (SDD)
 
-This project uses the SDD workflow (https://github.com/siimvd/agent-sdd) for structured feature development. SDD provides a repeatable process from idea to shipped feature.
+This project uses the SDD workflow (https://github.com/siimvd/agent-plugins) for structured feature development. SDD provides a repeatable process from idea to shipped feature.
 
 ### Workflow
 
