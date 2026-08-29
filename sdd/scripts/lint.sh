@@ -153,7 +153,63 @@ for plugin_dir in ${PLUGINS[@]+"${PLUGINS[@]}"}; do
   fi
 done
 
-# 6. Every plugin's build-opencode.sh output is byte-identical across two runs.
+# 6. Codex manifests: each plugin's .codex-plugin/plugin.json version must
+#    match its .claude-plugin/plugin.json version, and every plugin must be
+#    listed in .agents/plugins/marketplace.json. If Codex's own bundled
+#    validator is installed locally, run it too. Both are skipped cleanly
+#    when absent — the validator lives outside the repo, at $HOME/.codex.
+codex_marketplace_plugin_names() {
+  awk '
+    /"plugins": *\[/ { in_plugins = 1 }
+    in_plugins && match($0, /"name": *"[^"]*"/) {
+      v = substr($0, RSTART, RLENGTH)
+      gsub(/.*: *"|"$/, "", v)
+      print v
+    }
+  ' "$1"
+}
+
+CODEX_MARKETPLACE=".agents/plugins/marketplace.json"
+if [[ ! -f "$CODEX_MARKETPLACE" ]]; then
+  fail "$CODEX_MARKETPLACE: missing"
+else
+  CODEX_LISTED="$(codex_marketplace_plugin_names "$CODEX_MARKETPLACE")"
+  for plugin_dir in ${PLUGINS[@]+"${PLUGINS[@]}"}; do
+    codex_manifest="$plugin_dir/.codex-plugin/plugin.json"
+    if [[ ! -f "$codex_manifest" ]]; then
+      fail "$plugin_dir: missing .codex-plugin/plugin.json"
+      continue
+    fi
+    codex_version="$(json_version "$codex_manifest")"
+    claude_version="$(json_version "$plugin_dir/.claude-plugin/plugin.json")"
+    if [[ -z "$codex_version" ]]; then
+      fail "$codex_manifest: could not determine version"
+    elif [[ "$codex_version" != "$claude_version" ]]; then
+      fail "$plugin_dir: .codex-plugin/plugin.json version $codex_version does not match .claude-plugin/plugin.json version $claude_version"
+    fi
+    if ! echo "$CODEX_LISTED" | grep -qx "$plugin_dir"; then
+      fail "$plugin_dir: not listed in $CODEX_MARKETPLACE"
+    fi
+  done
+  pass "Codex manifests checked"
+fi
+
+CODEX_VALIDATOR="$HOME/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py"
+if [[ -f "$CODEX_VALIDATOR" ]] && command -v python3 >/dev/null 2>&1; then
+  for plugin_dir in ${PLUGINS[@]+"${PLUGINS[@]}"}; do
+    validator_log="$(mktemp)"
+    if ! python3 "$CODEX_VALIDATOR" "$plugin_dir" >"$validator_log" 2>&1; then
+      fail "$plugin_dir: Codex plugin validator failed:"
+      cat "$validator_log"
+    fi
+    rm -f "$validator_log"
+  done
+  pass "Codex plugin validator checked (found at $CODEX_VALIDATOR)"
+else
+  pass "Codex plugin validator not found locally, skipped"
+fi
+
+# 7. Every plugin's build-opencode.sh output is byte-identical across two runs.
 #    All plugins write into the same .opencode/ tree, so the snapshot is taken
 #    after running every build script, and compared across two full passes.
 BUILD_SCRIPTS=()
