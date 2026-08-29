@@ -83,7 +83,7 @@ Parse `$ARGUMENTS` for:
 3. Open only the learnings whose tags or files overlap this change, capped at 5
 4. State which learnings informed the plan, or "No relevant learnings found" if none matched — feed anything used into the spec's Risks or Patterns to Follow sections
 
-**Research threads** (dispatch as parallel Explore subagents):
+**Research threads** (dispatch as parallel `sdd:sdd-explorer` subagents, see `sdd/agents/sdd-explorer.md`):
 
 | Thread | What It Does |
 |--------|-------------|
@@ -108,7 +108,7 @@ Return:
 
 After research completes, present key findings to user: "Here's what I found in the codebase. Any surprises?"
 
-**In --fast mode**: Single Explore agent with all three questions combined. Present findings inline without a separate confirmation step.
+**In --fast mode**: Single `sdd:sdd-explorer` agent with all three questions combined. Present findings inline without a separate confirmation step.
 
 ### Phase 3: Author
 
@@ -240,11 +240,11 @@ Build must run in a fresh session — the spec file is the complete context.
 
 ## Multi-Agent Safety
 
-Research subagents in Phase 2 are **read-only** (Explore type) — safe to run in parallel. Each gets a focused prompt with specific research questions.
+Research subagents in Phase 2 are **read-only** (`sdd:sdd-explorer`) — safe to run in parallel. Each gets a focused prompt with specific research questions.
 
 | Scenario | Safe? | How |
 |----------|-------|-----|
-| 2-3 Explore agents reading code | Yes | Read-only, no conflicts |
+| 2-3 `sdd:sdd-explorer` agents reading code | Yes | Read-only, no conflicts |
 | 1 agent writing spec | Yes | Only one writer at a time |
 
 For future build-phase agents that write code, use worktree isolation or serialize. See the plan document for details.
