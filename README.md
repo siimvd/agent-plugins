@@ -1,4 +1,15 @@
-# SDD — Spec Driven Development Plugin
+# agent-plugins
+
+Opinionated plugins for AI coding tools.
+
+| Plugin | Version | Description |
+|--------|---------|-------------|
+| `sdd` | 0.8.0 | Spec Driven Development workflow — the rest of this README |
+| [`tools`](./tools/README.md) | 0.1.0 | Standalone developer utilities. Scaffold; no skills yet |
+
+---
+
+# sdd — Spec Driven Development
 
 An opinionated, portable workflow for structured feature development with AI coding tools.
 
@@ -27,6 +38,9 @@ From within Claude Code, add the marketplace and install the plugin:
 /plugin marketplace add siimvd/agent-plugins
 /plugin install sdd@agent-plugins
 ```
+
+`tools` installs the same way (`/plugin install tools@agent-plugins`), but it is still an
+empty scaffold — see [tools/README.md](./tools/README.md).
 
 ### OpenCode CLI
 
@@ -169,6 +183,16 @@ To override a tier for your own project, define an agent with the same name in y
 The canonical source is the Claude Code plugin (`skills/*/SKILL.md`, `agents/*.md`). The build script generates equivalent output for other tools:
 
 - **OpenCode**: `scripts/build-opencode.sh` → `.opencode/commands/sdd-*.md` and `.opencode/agents/sdd-*.md`. `effort` and `maxTurns` have no OpenCode equivalent and are dropped, with a comment in the generated file naming what was lost.
+
+Each plugin owns its own build script. `tools/scripts/build-opencode.sh` does the same job for `tools`, discovering skills and inline files instead of listing them.
+
+## Linting
+
+```bash
+bash sdd/scripts/lint.sh
+```
+
+Structural lint for every plugin registered in `.claude-plugin/marketplace.json` — frontmatter shape, `${CLAUDE_SKILL_DIR}` references, leftover paste markers, required agent fields, per-plugin version agreement between `plugin.json` and the marketplace entry, and build determinism. It checks structure, not behavior.
 
 ## License
 

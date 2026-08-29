@@ -4,7 +4,7 @@
     "name": "Siim Viidu"
   },
   "metadata": {
-    "description": "Spec Driven Development workflow for AI coding tools"
+    "description": "Opinionated plugins for AI coding tools: Spec Driven Development, plus standalone utilities"
   },
   "plugins": [
     {
@@ -12,6 +12,16 @@
       "source": "./sdd",
       "description": "Spec Driven Development workflow: setup, brainstorm, plan, build, review, finish",
       "version": "0.8.0",
+      "author": {
+        "name": "Siim Viidu"
+      },
+      "license": "MIT"
+    },
+    {
+      "name": "tools",
+      "source": "./tools",
+      "description": "Standalone developer utility skills, independent of the SDD workflow",
+      "version": "0.1.0",
       "author": {
         "name": "Siim Viidu"
       },
