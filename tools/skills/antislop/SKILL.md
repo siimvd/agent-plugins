@@ -130,8 +130,3 @@ precise-sounding fabrication.
 AI-tool citation artifacts sometimes leak into pasted text verbatim: `oaicite`, `turn0search0`,
 `contentReference`, `[cite: 1]`. If any of these appear, it's a bug, not a style choice. Delete
 them.
-
-## Sources
-
-Built from `cursor/plugins`' `unslop` skill, `no-ai-slop`, `anti-slop`, and cross-checked against
-Wikipedia's [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing).

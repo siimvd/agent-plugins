@@ -91,10 +91,3 @@ Leftover markup from pasting AI-tool output, not stylistic at all: `contentRefer
 `grok_render_citation_card_json` (Grok); lenticular brackets or dagger symbols (DeepSeek);
 `attached_file`, `ppl-ai-file-upload` (Perplexity). If any of these strings appear in text meant
 for a reader, it's a bug: delete it.
-
-## Sources
-
-- `cursor/plugins`, `pstack/skills/unslop/SKILL.md`
-- `no-ai-slop` (bundled Claude Code skill)
-- `anti-slop` (this marketplace's `common` plugin)
-- Wikipedia, [Signs of AI writing](https://en.wikipedia.org/wiki/Wikipedia:Signs_of_AI_writing)
