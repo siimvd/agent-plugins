@@ -83,9 +83,12 @@ build_command() {
     frontmatter=$(awk '/^---$/{n++; next} n==1{print}' "$skill_file")
     body=$(awk '/^---$/{n++; next} n>=2{print}' "$skill_file")
 
-    # Write frontmatter, stripping Claude-specific fields
+    # Write frontmatter, keeping only fields OpenCode commands recognize
+    # (description, agent, model, subtask) — drop name (filename determines
+    # the command) and Claude-specific fields
     echo "---"
     echo "$frontmatter" \
+      | grep -v "^name:" \
       | grep -v "^allowed-tools:" \
       | grep -v "^disable-model-invocation:" \
       | grep -v "^  -"
@@ -111,8 +114,12 @@ build_command() {
 }
 
 # Helper: convert a plugin agent definition (tools/agents/*.md) to an
-# OpenCode subagent (.opencode/agents/*.md). effort and maxTurns have no
-# OpenCode equivalent and are dropped with a comment naming them.
+# OpenCode subagent (.opencode/agents/*.md). maxTurns maps to OpenCode's
+# `steps` (its documented "maximum number of agentic iterations" cap).
+# `effort` has no equivalent: OpenCode's provider-parameter passthrough
+# (e.g. reasoningEffort) is documented for OpenAI reasoning models, not
+# verified for the Anthropic models map_model targets, so it is dropped
+# rather than mapped to an unverified field.
 # Usage: build_agent <agent_file>
 build_agent() {
   local agent_file="$1"
@@ -133,6 +140,7 @@ build_agent() {
     echo "description: $description"
     echo "mode: subagent"
     echo "model: $(map_model "$model")"
+    [[ -n "$max_turns" ]] && echo "steps: $max_turns"
     if [[ -n "$disallowed_tools" ]]; then
       echo "permission:"
       [[ "$disallowed_tools" == *"Edit"* ]] && echo "  edit: deny"
@@ -140,7 +148,7 @@ build_agent() {
     fi
     echo "---"
     echo ""
-    echo "<!-- Dropped, no OpenCode equivalent: effort=$effort, maxTurns=$max_turns -->"
+    echo "<!-- Dropped, no verified OpenCode equivalent for an Anthropic model: effort=$effort -->"
     echo ""
     echo "$body"
   } > "$out_file"
