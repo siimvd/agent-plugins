@@ -115,8 +115,8 @@ After research completes, present key findings to user: "Here's what I found in 
 **Goal**: Write the spec file. Confirm key decisions with the user.
 
 Write a single `docs/specs/<name>.md` using the template at `${CLAUDE_SKILL_DIR}/spec-template.md`.
-(`${CLAUDE_SKILL_DIR}` is this skill's own directory — Claude Code substitutes it automatically;
-on a tool that doesn't, resolve it yourself as this skill's directory, using this file's known
+(`${CLAUDE_SKILL_DIR}` is this skill's own directory, substituted automatically by Claude Code.
+On a tool that doesn't, resolve it yourself as this skill's directory, using this file's known
 location.)
 
 Derive `<name>` from the idea or description: lowercase, hyphenated, 2-4 words.

@@ -1,6 +1,6 @@
 {
   "name": "tools",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Standalone developer utility skills, independent of the SDD workflow",
   "author": {
     "name": "Siim Viidu"
@@ -16,7 +16,7 @@
   "interface": {
     "displayName": "Tools",
     "shortDescription": "Standalone developer utilities",
-    "longDescription": "Standalone developer utility skills, independent of the SDD workflow. Currently a scaffold with no skills yet.",
+    "longDescription": "Standalone developer utility skills, independent of the SDD workflow.",
     "developerName": "Siim Viidu",
     "category": "Developer Tools",
     "capabilities": [
@@ -25,7 +25,7 @@
       "Write"
     ],
     "defaultPrompt": [
-      "Show me the available tools."
+      "Clean up the AI slop in this draft."
     ]
   }
 }

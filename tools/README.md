@@ -4,8 +4,11 @@ A companion plugin to [`sdd`](../sdd/README.md) for utility skills that don't be
 spec-driven workflow. `sdd` is a pipeline (setup, brainstorm, plan, build, review, finish); the
 skills here are meant to stand alone and be invoked whenever they're useful.
 
-**Status: scaffold.** The plugin structure, manifest, and OpenCode build are in place and
-verified, but no skills have been added yet. Installing it today gives you nothing to run.
+## Skills
+
+| Skill | Description |
+|-------|-------------|
+| [`antislop`](./skills/antislop/SKILL.md) | Standing quality bar for anything written: chat replies, docs, commit messages, comments. Strips AI-sounding vocabulary, filler, and formulaic rhetoric, then adds back plain, specific voice. Applies automatically; invoke directly as `/tools:antislop` (Claude Code) or `$tools:antislop` (Codex) to run it on demand. |
 
 ## Installation
 
@@ -35,11 +38,10 @@ portability below). There is no distributable install for OpenCode users outside
    substitutes `${CLAUDE_SKILL_DIR}` automatically; Codex and OpenCode don't, so add a one-line
    fallback note after the first reference telling a model how to resolve it itself (see any
    skill under `sdd/skills/` for the pattern).
-3. Delete `tools/skills/.gitkeep` once the first real skill lands.
-4. Bump the version in `tools/.claude-plugin/plugin.json`, `tools/.codex-plugin/plugin.json`, and
+3. Bump the version in `tools/.claude-plugin/plugin.json`, `tools/.codex-plugin/plugin.json`, and
    the `tools` entry in both `.claude-plugin/marketplace.json` and
    `.agents/plugins/marketplace.json`. Lint fails if any of the four disagree.
-5. Run the lint and the build:
+4. Run the lint and the build:
 
 ```bash
 bash sdd/scripts/lint.sh
