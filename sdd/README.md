@@ -183,7 +183,7 @@ Every subagent SDD dispatches resolves to a definition in `sdd/agents/`, not the
 
 | Agent | Model | Effort | Turn cap | Tools |
 |-------|-------|--------|----------|-------|
-| `sdd-explorer` | haiku | low | 15 | read-only |
+| `sdd-explorer` | haiku | medium | 15 | read-only |
 | `sdd-implementer` | sonnet | medium | 40 | full |
 | `sdd-reviewer` | sonnet | high | 25 | read-only |
 | `sdd-final-reviewer` | opus | high | 30 | read-only |

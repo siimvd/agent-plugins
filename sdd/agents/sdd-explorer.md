@@ -2,7 +2,7 @@
 name: sdd-explorer
 description: Read-only research subagent for /sdd:plan's Phase 2 research, dispatched by name as `sdd:sdd-explorer`. Investigates unfamiliar code before planning. Reports findings only, never writes or edits files.
 model: haiku
-effort: low
+effort: medium
 maxTurns: 15
 disallowedTools: Write, Edit, NotebookEdit
 ---
