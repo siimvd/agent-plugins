@@ -84,8 +84,8 @@ build_command() {
     body=$(awk '/^---$/{n++; next} n>=2{print}' "$skill_file")
 
     # Write frontmatter, keeping only fields OpenCode commands recognize
-    # (description, agent, model, subtask) — drop name (filename determines
-    # the command) and Claude-specific fields
+    # (description, agent, model, subtask). Drop name (filename determines
+    # the command) and Claude-specific fields.
     echo "---"
     echo "$frontmatter" \
       | grep -v "^name:" \

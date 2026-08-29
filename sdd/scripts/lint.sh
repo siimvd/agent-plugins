@@ -6,7 +6,7 @@ set -uo pipefail
 # and that each build-opencode.sh is deterministic.
 #
 # This checks STRUCTURE, not BEHAVIOR. A clean run means the plugins' files
-# are internally consistent — it says nothing about whether a skill does the
+# are internally consistent; it says nothing about whether a skill does the
 # right thing when invoked. It is a pre-commit sanity check, not a substitute
 # for exercising a skill for real.
 #
@@ -85,7 +85,7 @@ done
 pass "\${CLAUDE_SKILL_DIR}/\${CLAUDE_PLUGIN_ROOT} references checked"
 
 # 3. No "[paste" markers remain in skill or agent content. Only skills/ and
-#    agents/ are scanned, never scripts/ — this script's own source contains
+#    agents/ are scanned, never scripts/: this script's own source contains
 #    the marker it searches for.
 PASTE_SCAN=()
 for plugin_dir in ${PLUGINS[@]+"${PLUGINS[@]}"}; do
@@ -157,7 +157,7 @@ done
 #    match its .claude-plugin/plugin.json version, and every plugin must be
 #    listed in .agents/plugins/marketplace.json. If Codex's own bundled
 #    validator is installed locally, run it too. Both are skipped cleanly
-#    when absent — the validator lives outside the repo, at $HOME/.codex.
+#    when absent, since the validator lives outside the repo, at $HOME/.codex.
 codex_marketplace_plugin_names() {
   awk '
     /"plugins": *\[/ { in_plugins = 1 }

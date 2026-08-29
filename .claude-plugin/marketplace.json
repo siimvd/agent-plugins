@@ -4,7 +4,7 @@
     "name": "Siim Viidu"
   },
   "metadata": {
-    "description": "Opinionated plugins for AI coding tools: Spec Driven Development, plus standalone utilities"
+    "description": "General-purpose marketplace of plugins for personal and work productivity, coding workflows, and related tools"
   },
   "plugins": [
     {
