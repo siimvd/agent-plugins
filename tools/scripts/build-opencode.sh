@@ -1,9 +1,18 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Generates .opencode/commands/ and .opencode/agents/ from the canonical
-# Claude Code skills and agent definitions.
-# Run from the repo root: ./sdd/scripts/build-opencode.sh
+# Generates .opencode/commands/tools-*.md and .opencode/agents/*.md from the
+# canonical Claude Code skills and agent definitions in tools/.
+# Run from anywhere: ./tools/scripts/build-opencode.sh
+#
+# Unlike sdd/scripts/build-opencode.sh, which lists each skill and its inline
+# files explicitly, this script discovers both. Skills are found by globbing
+# skills/*/SKILL.md, and the files to inline are read out of each SKILL.md's
+# own ${CLAUDE_SKILL_DIR} references. That means a new skill needs no edit
+# here. The tradeoff is no control over inline order beyond the order the
+# references appear in the skill.
+
+shopt -s nullglob
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PLUGIN_DIR="$(dirname "$SCRIPT_DIR")"
@@ -13,32 +22,59 @@ AGENTS_OUT_DIR="$REPO_ROOT/.opencode/agents"
 
 mkdir -p "$OUT_DIR" "$AGENTS_OUT_DIR"
 
-# Helper: convert a skill to an OpenCode command
-# Usage: build_command <skill_dir> <output_name> <inline_files...>
+# Helper: read the first value of a single-line frontmatter field, empty if absent
+# Usage: frontmatter_field <file> <field>
+frontmatter_field() {
+  grep -m1 "^$2:" "$1" | sed "s/^$2: *//" || true
+}
+
+# Helper: map an internal model alias to an OpenCode provider-qualified string
+map_model() {
+  case "$1" in
+    haiku) echo "anthropic/claude-haiku-4-5" ;;
+    sonnet) echo "anthropic/claude-sonnet-5" ;;
+    opus) echo "anthropic/claude-opus-5" ;;
+    *) echo "anthropic/$1" ;;
+  esac
+}
+
+# Helper: list the ${CLAUDE_SKILL_DIR} references in a SKILL.md, deduped, in
+# the order they first appear. Prints one full reference per line; the caller
+# strips the prefix with bash parameter expansion rather than sed, because BSD
+# sed reads \{ \} as an interval expression and errors on the literal braces.
+# The || true keeps an unmatched grep from aborting under set -e.
+# Usage: inline_refs <skill_file>
+inline_refs() {
+  { grep -oE '\$\{CLAUDE_SKILL_DIR\}/[A-Za-z0-9_./-]+' "$1" || true; } \
+    | awk '!seen[$0]++'
+}
+
+# Helper: convert a skill to an OpenCode command, inlining every file the
+# skill references via ${CLAUDE_SKILL_DIR}.
+# Usage: build_command <skill_dir>
 build_command() {
   local skill_dir="$1"
-  local output_name="$2"
-  shift 2
-  local inline_files=()
-  if [[ $# -gt 0 ]]; then
-    inline_files=("$@")
-  fi
-
-  local skill_file="$skill_dir/SKILL.md"
-  local out_file="$OUT_DIR/$output_name.md"
+  local skill_name output_name skill_file out_file
+  skill_name="$(basename "$skill_dir")"
+  output_name="tools-$skill_name"
+  skill_file="$skill_dir/SKILL.md"
+  out_file="$OUT_DIR/$output_name.md"
 
   if [[ ! -f "$skill_file" ]]; then
     echo "Warning: SKILL.md not found at $skill_file, skipping" >&2
     return
   fi
 
-  # Verify inline files exist
-  for f in "${inline_files[@]+"${inline_files[@]}"}"; do
-    if [[ ! -f "$skill_dir/$f" ]]; then
-      echo "Warning: $f not found in $skill_dir, skipping" >&2
+  local inline_files=() ref rel
+  while IFS= read -r ref; do
+    [[ -n "$ref" ]] || continue
+    rel="${ref#'${CLAUDE_SKILL_DIR}/'}"
+    if [[ ! -f "$skill_dir/$rel" ]]; then
+      echo "Warning: $skill_file references $rel, which does not exist, skipping skill" >&2
       return
     fi
-  done
+    inline_files+=("$rel")
+  done < <(inline_refs "$skill_file")
 
   {
     # Extract frontmatter (between first and second ---) and body (after second ---)
@@ -62,8 +98,8 @@ build_command() {
     # $ARGUMENTS carries over to OpenCode unchanged, so it is left alone here.
 
     # Replace ${CLAUDE_SKILL_DIR} references with inline content
+    local f escaped_f
     for f in "${inline_files[@]+"${inline_files[@]}"}"; do
-      local escaped_f
       escaped_f=$(echo "$f" | sed 's/[\/&]/\\&/g')
       body=$(echo "$body" | sed '/\${CLAUDE_SKILL_DIR}\/'"$escaped_f"'/{
         s/.*/## Inlined: '"$escaped_f"'/
@@ -77,23 +113,7 @@ build_command() {
   echo "Generated: $out_file"
 }
 
-# Helper: read the first value of a single-line frontmatter field, empty if absent
-# Usage: frontmatter_field <file> <field>
-frontmatter_field() {
-  grep -m1 "^$2:" "$1" | sed "s/^$2: *//" || true
-}
-
-# Helper: map an internal model alias to an OpenCode provider-qualified string
-map_model() {
-  case "$1" in
-    haiku) echo "anthropic/claude-haiku-4-5" ;;
-    sonnet) echo "anthropic/claude-sonnet-5" ;;
-    opus) echo "anthropic/claude-opus-5" ;;
-    *) echo "anthropic/$1" ;;
-  esac
-}
-
-# Helper: convert a plugin agent definition (sdd/agents/*.md) to an
+# Helper: convert a plugin agent definition (tools/agents/*.md) to an
 # OpenCode subagent (.opencode/agents/*.md). maxTurns maps to OpenCode's
 # `steps` (its documented "maximum number of agentic iterations" cap).
 # `effort` has no equivalent: OpenCode's provider-parameter passthrough
@@ -136,43 +156,18 @@ build_agent() {
   echo "Generated: $out_file"
 }
 
+built=0
+
 for agent_file in "$PLUGIN_DIR"/agents/*.md; do
   build_agent "$agent_file"
+  built=$((built + 1))
 done
 
-# Build brainstorm command
-build_command \
-  "$PLUGIN_DIR/skills/brainstorm" \
-  "sdd-brainstorm" \
-  "mini-prd-template.md"
+for skill_dir in "$PLUGIN_DIR"/skills/*/; do
+  build_command "${skill_dir%/}"
+  built=$((built + 1))
+done
 
-# Build plan command
-build_command \
-  "$PLUGIN_DIR/skills/plan" \
-  "sdd-plan" \
-  "spec-template.md" \
-  "references/task-writing-guide.md"
-
-# Build build command
-build_command \
-  "$PLUGIN_DIR/skills/build" \
-  "sdd-build" \
-  "references/review-triggers.md" \
-  "references/agent-prompts.md"
-
-# Build review command (no inline files needed)
-build_command \
-  "$PLUGIN_DIR/skills/review" \
-  "sdd-review"
-
-# Build finish command (no inline files needed)
-build_command \
-  "$PLUGIN_DIR/skills/finish" \
-  "sdd-finish"
-
-# Build setup command
-build_command \
-  "$PLUGIN_DIR/skills/setup" \
-  "sdd-setup" \
-  "agents-template.md" \
-  "sdd-section.md"
+if [[ "$built" == 0 ]]; then
+  echo "Nothing to build: tools/ has no skills or agents yet."
+fi

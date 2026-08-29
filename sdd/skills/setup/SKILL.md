@@ -112,6 +112,9 @@ Three possible states:
 
 **No AGENTS.md exists:**
 1. Read the best-practices template from `${CLAUDE_SKILL_DIR}/agents-template.md`
+   (`${CLAUDE_SKILL_DIR}` is this skill's own directory — Claude Code substitutes it
+   automatically; on a tool that doesn't, resolve it yourself as this skill's directory, using
+   this file's known location.)
 2. Read the SDD section from `${CLAUDE_SKILL_DIR}/sdd-section.md`
 3. Create `AGENTS.md` at the repo root with the template content followed by the SDD section
 
@@ -143,8 +146,12 @@ mkdir -p docs/ideas
 Copy templates from the plugin into the repo if they don't already exist:
 
 Source templates (in the plugin repo):
-- `${CLAUDE_SKILL_DIR}/../plan/spec-template.md` — the full spec template
-- `${CLAUDE_SKILL_DIR}/../plan/references/task-writing-guide.md` — task writing reference
+- `${CLAUDE_PLUGIN_ROOT}/skills/plan/spec-template.md` — the full spec template
+- `${CLAUDE_PLUGIN_ROOT}/skills/plan/references/task-writing-guide.md` — task writing reference
+
+(`${CLAUDE_PLUGIN_ROOT}` is the whole plugin's install directory — Claude Code substitutes it
+automatically; on a tool that doesn't, resolve it yourself as the plugin's root directory, using
+this file's known location.)
 
 Also check for existing templates in `docs/specs/.templates/`:
 - `docs/specs/.templates/requirements.md`
