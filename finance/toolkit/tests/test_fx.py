@@ -275,6 +275,40 @@ class SeriesCliTest(StoreBackedTest):
         self.assertEqual(payload["bar_count"], 3)
         self.assertEqual(payload["derived_from"], "yfinance/TESTA_1d")
 
+    def test_series_reads_the_fx_entry_once(self):
+        """A ten-bar conversion must not re-read the FX CSV ten times."""
+        days = ["2025-01-%02d" % day for day in range(2, 12)]
+        self.seed_fx(rates=dict((day, 1.0 + index / 100.0)
+                                for index, day in enumerate(days)))
+        write_series("yfinance", "TESTA",
+                     dict((day, 100.0 + index) for index, day in enumerate(days)),
+                     {"currency": "USD", "adjusted": True})
+
+        seen = []
+        original = store.read_bars
+
+        def counting(source, key_, interval):
+            seen.append((source, key_, interval))
+            return original(source, key_, interval)
+
+        store.read_bars = counting
+        try:
+            code, _, err = run(["series", "TESTA", "--to", "EUR"])
+        finally:
+            store.read_bars = original
+
+        self.assertEqual(code, 0, err)
+        fx_reads = [entry for entry in seen if entry[1] == "IDEALPRO_EURUSD"]
+        self.assertEqual(fx_reads, [("ibkr", "IDEALPRO_EURUSD", "1d")])
+        # exactly two reads in total: the source entry and the FX pair
+        self.assertEqual(len(seen), 2)
+
+        rows, _ = store.read_bars("yfinance", "TESTA_EUR", "1d")
+        by_date = dict((row["date"], row["close"]) for row in rows)
+        # each bar is still converted at its own session's rate
+        self.assertAlmostEqual(by_date["2025-01-02"], 100.0 / 1.00, places=9)
+        self.assertAlmostEqual(by_date["2025-01-11"], 109.0 / 1.09, places=9)
+
     def test_series_prints_no_bar_rows(self):
         self.seed_fx()
         self.seed_equity()

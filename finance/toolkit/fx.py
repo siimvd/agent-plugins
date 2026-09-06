@@ -99,22 +99,28 @@ def find_pair(ccy):
     )
 
 
-def rate(ccy, date=None):
-    """Return ``(rate, used_date, fx_key)`` for converting ``ccy`` into EUR.
+def load_pair(ccy):
+    """Return ``(rows, fx_key)`` for the ``EUR<CCY>`` entry, read once.
 
-    ``rate`` is quote currency per EUR. ``date`` selects the bar on that
-    session or the nearest prior one; omit it for the latest stored bar.
-    ``ccy`` of ``EUR`` short-circuits to ``1.0`` with no store access, so a
-    EUR-denominated caller never needs an FX entry at all.
+    Callers converting many dates should hold onto the rows and feed them to
+    :func:`rate_from` rather than calling :func:`rate` per date, which would
+    re-list the store and re-parse the whole CSV every time.
     """
-    if ccy and ccy.upper() == BASE_CURRENCY:
-        return 1.0, date, None
-
     source, key_, interval = find_pair(ccy)
     rows, _ = store.read_bars(source, key_, interval)
     if not rows:
         raise FxError("FX entry %s/%s_%s has no bars" % (source, key_, interval))
+    return rows, "%s/%s" % (source, key_)
 
+
+def rate_from(rows, ccy, date=None):
+    """Pick the ``ccy``-per-EUR rate for ``date`` out of already-loaded rows.
+
+    Returns ``(rate, used_date)``: the bar on that session, else the nearest
+    one before it. Never a later bar — pricing today with tomorrow's rate is a
+    look-ahead, and a series converted that way would show relationships that
+    were not observable at the time.
+    """
     chosen = None
     for row in rows:  # store rows are ascending by date
         if date is None or row["date"] <= date:
@@ -130,7 +136,26 @@ def rate(ccy, date=None):
         raise FxError(
             "EUR%s bar on %s has a non-positive close" % (ccy.upper(), chosen["date"])
         )
-    return chosen["close"], chosen["date"], "%s/%s" % (source, key_)
+    return chosen["close"], chosen["date"]
+
+
+def rate(ccy, date=None):
+    """Return ``(rate, used_date, fx_key)`` for converting ``ccy`` into EUR.
+
+    ``rate`` is quote currency per EUR. ``date`` selects the bar on that
+    session or the nearest prior one; omit it for the latest stored bar.
+    ``ccy`` of ``EUR`` short-circuits to ``1.0`` with no store access, so a
+    EUR-denominated caller never needs an FX entry at all.
+
+    This reads the pair from disk on every call. Converting a whole series
+    goes through :func:`load_pair` plus :func:`rate_from` instead.
+    """
+    if ccy and ccy.upper() == BASE_CURRENCY:
+        return 1.0, date, None
+
+    rows, fx_key = load_pair(ccy)
+    value, used_date = rate_from(rows, ccy, date)
+    return value, used_date, fx_key
 
 
 def to_eur(amount, ccy, date=None):
@@ -212,11 +237,12 @@ def _cmd_series(args):
             % (source, key_, interval)
         )
 
-    fx_key = None
+    # The pair is read once for the whole series; calling rate() per bar would
+    # re-list the store and re-parse the FX CSV on every iteration.
+    fx_rows, fx_key = load_pair(ccy)
     converted = []
     for row in rows:
-        value, _, key_used = rate(ccy, row["date"])
-        fx_key = key_used
+        value, _ = rate_from(fx_rows, ccy, row["date"])
         new_row = {"date": row["date"], "volume": row.get("volume")}
         for field in PRICE_FIELDS:
             new_row[field] = row[field] / value
