@@ -1,0 +1,44 @@
+{
+  "_comment": "Synthetic fixture, not a real instrument or currency pair. TESTFX on exchange TESTFXX, 5 daily bars from 2026-08-03T21:15:00Z, one calendar day apart, stamped 21:15Z the way IDEALPRO stamps FX daily bars, with no 'volume' array. close_i = 1.10 + 0.01 * i; open_i = close_i - 0.005; high_i = close_i + 0.01; low_i = close_i - 0.01.",
+  "chart_step": 86400,
+  "chart_start": "2026-08-03T00:00:00Z",
+  "chart_end": "2026-08-07T00:00:00Z",
+  "expires": "2026-09-06T12:00:00Z",
+  "delayed": 0,
+  "source": "MidPoint",
+  "time": [
+    "2026-08-03T21:15:00Z",
+    "2026-08-04T21:15:00Z",
+    "2026-08-05T21:15:00Z",
+    "2026-08-06T21:15:00Z",
+    "2026-08-07T21:15:00Z"
+  ],
+  "open": [
+    1.095,
+    1.105,
+    1.115,
+    1.125,
+    1.135
+  ],
+  "close": [
+    1.1,
+    1.11,
+    1.12,
+    1.13,
+    1.14
+  ],
+  "high": [
+    1.11,
+    1.12,
+    1.13,
+    1.14,
+    1.15
+  ],
+  "low": [
+    1.09,
+    1.1,
+    1.11,
+    1.12,
+    1.13
+  ]
+}
