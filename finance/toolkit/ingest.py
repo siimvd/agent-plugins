@@ -291,6 +291,7 @@ def build_parser():
     )
     history.add_argument(
         "--interval",
+        choices=sorted(set(STEP_INTERVALS.values())),
         help="interval name; derived from chart_step when omitted",
     )
     history.add_argument(

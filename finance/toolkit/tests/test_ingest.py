@@ -401,5 +401,56 @@ class TestFixtures(unittest.TestCase):
         self.assertEqual(len(fx["close"]), 5)
 
 
+class TestIntervalArgumentIsConstrained(IngestTestCase):
+    """--interval is a closed set, so it cannot become a chosen filename."""
+
+    def setUp(self):
+        super().setUp()
+        self.sandbox = self.tmp
+        self.store_root = os.path.join(self.sandbox, "store")
+        os.makedirs(self.store_root)
+        os.environ["FINANCE_STORE"] = self.store_root
+
+    def test_traversing_interval_is_refused_and_writes_nothing(self):
+        raw = self.write_raw(load_fixture(DELAYED_FIXTURE))
+        argv = [
+            "ibkr-history",
+            raw,
+            "--symbol",
+            "TESTA",
+            "--exchange",
+            "TESTX",
+            "--currency",
+            "EUR",
+            "--interval",
+            "1d/../x",
+        ]
+        try:
+            code, _, _ = self.run_cli(argv)
+        except SystemExit as exc:
+            code = exc.code
+        self.assertIn(code, (1, 2))
+        self.assertEqual(sorted(os.listdir(self.store_root)), [])
+        self.assertEqual(sorted(os.listdir(self.sandbox)), ["raw.json", "store"])
+
+    def test_known_intervals_are_still_accepted(self):
+        raw = self.write_raw(load_fixture(DELAYED_FIXTURE))
+        code, _, err = self.run_cli(
+            [
+                "ibkr-history",
+                raw,
+                "--symbol",
+                "TESTA",
+                "--exchange",
+                "TESTX",
+                "--currency",
+                "EUR",
+                "--interval",
+                "1d",
+            ]
+        )
+        self.assertEqual(code, 0, err)
+
+
 if __name__ == "__main__":
     unittest.main()

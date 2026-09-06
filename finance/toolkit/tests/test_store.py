@@ -417,5 +417,85 @@ class TestCli(StoreTestCase):
         self.assertIn("ibkr", out)
 
 
+class TestPathComponentValidation(StoreTestCase):
+    """A key or interval must never be able to steer a write out of the root."""
+
+    #: Keys that must be refused: traversal, separators, empty, over-long.
+    BAD_KEYS = ("../escape", "a/b", "..", "", "A" * 65)
+
+    #: Real-world keys that must keep working.
+    GOOD_KEYS = ("VWCE.DE", "LIFCO-B.ST", "EURUSD=X", "^GSPC", "IBIS2_VWCE")
+
+    def setUp(self):
+        super().setUp()
+        self.sandbox = self.tmp
+        self.store_root = os.path.join(self.sandbox, "store")
+        os.makedirs(self.store_root)
+        os.environ["FINANCE_STORE"] = self.store_root
+
+    def assert_nothing_escaped(self):
+        self.assertEqual(sorted(os.listdir(self.sandbox)), ["store"])
+
+    def test_write_bars_rejects_bad_keys(self):
+        for bad in self.BAD_KEYS:
+            with self.subTest(key=bad):
+                with self.assertRaises(store.StoreError):
+                    store.write_bars("yfinance", bad, "1d", make_rows(2), {})
+                self.assert_nothing_escaped()
+
+    def test_read_bars_rejects_bad_keys(self):
+        for bad in self.BAD_KEYS:
+            with self.subTest(key=bad):
+                with self.assertRaises(store.StoreError):
+                    store.read_bars("yfinance", bad, "1d")
+                self.assert_nothing_escaped()
+
+    def test_escaping_key_writes_nothing_outside_the_root(self):
+        # bars/<source>/ is two levels below the root, so three ".." would
+        # land the file in the sandbox beside the store itself.
+        with self.assertRaises(store.StoreError):
+            store.write_bars("yfinance", "../../../escaped", "1d", make_rows(2), {})
+        self.assert_nothing_escaped()
+
+    def test_good_keys_are_accepted(self):
+        for good in self.GOOD_KEYS:
+            with self.subTest(key=good):
+                self.assertEqual(store.validate_key(good), good)
+                store.write_bars("yfinance", good, "1d", make_rows(2), {})
+                rows, meta = store.read_bars("yfinance", good, "1d")
+                self.assertEqual(len(rows), 2)
+                self.assertEqual(meta["key"], good)
+
+    def test_good_intervals_are_accepted(self):
+        for good in ("1d", "1wk", "1mo", "5m", "1w", "1h", "15m", "60m"):
+            with self.subTest(interval=good):
+                self.assertEqual(store.validate_interval(good), good)
+
+    def test_bad_intervals_are_rejected(self):
+        for bad in ("../x", "1d/../x", "", "d", "1y", "1d/", "1" * 65):
+            with self.subTest(interval=bad):
+                with self.assertRaises(store.StoreError):
+                    store.validate_interval(bad)
+
+    def test_write_bars_rejects_a_traversing_interval(self):
+        with self.assertRaises(store.StoreError):
+            store.write_bars("yfinance", "TESTA", "../../../x", make_rows(2), {})
+        self.assert_nothing_escaped()
+
+    def test_paths_rejects_a_traversing_source(self):
+        with self.assertRaises(store.StoreError):
+            store.paths("../../..", "TESTA", "1d")
+
+    def test_paths_of_a_valid_entry_stay_inside_the_root(self):
+        csv_path, meta_path = store.paths("yfinance", "^GSPC", "1d")
+        for path in (csv_path, meta_path):
+            self.assertTrue(
+                os.path.realpath(path).startswith(
+                    os.path.realpath(self.store_root) + os.sep
+                ),
+                path,
+            )
+
+
 if __name__ == "__main__":
     unittest.main()

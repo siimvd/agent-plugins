@@ -52,6 +52,7 @@ import csv
 import datetime
 import json
 import os
+import re
 import sys
 
 SCHEMA_VERSION = 1
@@ -75,9 +76,57 @@ OPTIONAL_META_FIELDS = (
 
 _META_SUFFIX = ".meta.json"
 
+#: Longest accepted store key or interval, in characters.
+MAX_COMPONENT_LEN = 64
+
+#: A store key must look like a real instrument identifier. Yahoo tickers use
+#: ``.``, ``-``, ``=`` and a leading ``^`` (``VWCE.DE``, ``LIFCO-B.ST``,
+#: ``EURUSD=X``, ``^GSPC``); IBKR keys use ``_`` (``IBIS2_VWCE``). Everything
+#: else - separators, a leading dot, anything non-ASCII - is rejected, so no
+#: key can steer a write out of the store root.
+_KEY_RE = re.compile(r"[A-Za-z0-9^][A-Za-z0-9._=^-]*\Z")
+
+#: An interval is a count plus a unit: 5m, 1h, 1d, 1w, 1wk, 1mo.
+_INTERVAL_RE = re.compile(r"[0-9]+(m|h|d|w|mo|wk)\Z")
+
 
 class StoreError(Exception):
     """Raised when a store entry is missing or malformed."""
+
+
+def _check_component(value, label, pattern):
+    """Raise StoreError unless ``value`` is safe to join into a store path."""
+    if not isinstance(value, str) or not value:
+        raise StoreError("%s must be a non-empty string, got %r" % (label, value))
+    if len(value) > MAX_COMPONENT_LEN:
+        raise StoreError(
+            "%s is longer than %d characters: %r"
+            % (label, MAX_COMPONENT_LEN, value[:80])
+        )
+    if "/" in value or "\\" in value or "\0" in value or ".." in value:
+        raise StoreError("%s contains a path separator or '..': %r" % (label, value))
+    if not pattern.match(value):
+        raise StoreError("%s is not a valid store path component: %r" % (label, value))
+    return value
+
+
+def validate_key(key_):
+    """Return ``key_`` if it is a safe store key; raise StoreError otherwise."""
+    return _check_component(key_, "store key", _KEY_RE)
+
+
+def validate_interval(interval):
+    """Return ``interval`` if it is a safe interval name; else raise StoreError."""
+    return _check_component(interval, "interval", _INTERVAL_RE)
+
+
+def assert_inside_root(path):
+    """Raise StoreError unless ``path`` resolves inside the store root."""
+    resolved = os.path.realpath(path)
+    base = os.path.realpath(root())
+    if resolved != base and not resolved.startswith(base + os.sep):
+        raise StoreError("refusing a path outside the store root: %s" % (path,))
+    return path
 
 
 def root():
@@ -94,9 +143,19 @@ def bars_dir(source):
 
 
 def paths(source, key_, interval):
-    """Return ``(csv_path, meta_path)`` for one entry."""
+    """Return ``(csv_path, meta_path)`` for one entry.
+
+    Every read and write funnels through here, so the key and interval are
+    validated and the result is checked against the store root: a traversing
+    key or interval raises :class:`StoreError` instead of reaching the disk.
+    """
+    validate_key(key_)
+    validate_interval(interval)
     base = os.path.join(bars_dir(source), "%s_%s" % (key_, interval))
-    return base + ".csv", base + _META_SUFFIX
+    csv_path, meta_path = base + ".csv", base + _META_SUFFIX
+    assert_inside_root(csv_path)
+    assert_inside_root(meta_path)
+    return csv_path, meta_path
 
 
 def key(source, exchange, symbol):
@@ -208,11 +267,11 @@ def write_bars(source, key_, interval, rows, meta=None):
     sidecar["bar_count"] = len(ordered)
     sidecar["fetched_at"] = _utc_now_iso()
 
+    csv_path, meta_path = paths(source, key_, interval)
     directory = bars_dir(source)
     if not os.path.isdir(directory):
         os.makedirs(directory)
 
-    csv_path, meta_path = paths(source, key_, interval)
     with open(csv_path, "w", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(CSV_HEADER)

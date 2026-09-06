@@ -278,8 +278,14 @@ def fetch_bars(ticker, period="1y", interval="1d", downloader=None):
 
 
 def fundamentals_path(ticker):
-    """Return the path of one ticker's fundamentals file in the store."""
-    return os.path.join(store.root(), FUNDAMENTALS_DIR, "%s.json" % ticker)
+    """Return the path of one ticker's fundamentals file in the store.
+
+    This join bypasses :func:`store.paths`, so it validates the ticker with the
+    same rules and checks the result against the store root itself.
+    """
+    store.validate_key(ticker)
+    path = os.path.join(store.root(), FUNDAMENTALS_DIR, "%s.json" % ticker)
+    return store.assert_inside_root(path)
 
 
 def _write_fundamentals(ticker, payload):
@@ -304,6 +310,7 @@ def fetch_info(ticker, downloader=None):
     """
     if not ticker:
         raise FetchError("a ticker is required")
+    store.validate_key(ticker)
     source = _default_downloader(downloader)
 
     try:

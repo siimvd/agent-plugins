@@ -381,5 +381,39 @@ class InfoTest(FetchYfTestCase):
         self.assertEqual(json.loads(out)["shortName"], "Test A")
 
 
+class TestFundamentalsPathIsConfined(FetchYfTestCase):
+    """A ticker is a filename in the fundamentals directory, so it is checked."""
+
+    def setUp(self):
+        super().setUp()
+        self.sandbox = self.tmp
+        self.store_root = os.path.join(self.sandbox, "store")
+        os.makedirs(self.store_root)
+        os.environ["FINANCE_STORE"] = self.store_root
+
+    def test_info_with_a_traversing_ticker_exits_one_and_writes_nothing(self):
+        fake = FakeDownloader(info={"shortName": "Test A"})
+        code, _, err = self.run_cli(["info", "../../evil"], fake)
+
+        self.assertEqual(code, 1)
+        self.assertIn("../../evil", err)
+        self.assertEqual(sorted(os.listdir(self.store_root)), [])
+        self.assertEqual(sorted(os.listdir(self.sandbox)), ["store"])
+        self.assertEqual(fake.calls, [])
+
+    def test_fundamentals_path_rejects_a_traversing_ticker(self):
+        with self.assertRaises(store.StoreError):
+            fetch_yf.fundamentals_path("../../evil")
+
+    def test_fundamentals_path_of_a_real_ticker_stays_inside_the_root(self):
+        path = fetch_yf.fundamentals_path("VWCE.DE")
+        self.assertTrue(
+            os.path.realpath(path).startswith(
+                os.path.realpath(self.store_root) + os.sep
+            ),
+            path,
+        )
+
+
 if __name__ == "__main__":
     unittest.main()
