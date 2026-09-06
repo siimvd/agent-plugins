@@ -1,0 +1,9 @@
+{
+  "name": "finance",
+  "version": "0.1.0",
+  "description": "Personal finance skills: market data providers, on-disk store, analysis toolkit",
+  "author": {
+    "name": "Siim Viidu"
+  },
+  "license": "MIT"
+}

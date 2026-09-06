@@ -1,0 +1,11 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "ibkr": {
+      "_comment": "Merge into your opencode.json. OpenCode runs IBKR's browser OAuth login on first connect; grant the mcp.read scope only, since these skills never write.",
+      "type": "remote",
+      "url": "https://api.ibkr.com/v1/api/mcp-public",
+      "enabled": true
+    }
+  }
+}

@@ -239,6 +239,29 @@ else
   rm -rf "$first_run" "$second_run"
 fi
 
+# 8. No IBAN-shaped tokens in committed plugin content. The finance plugin
+#    handles account data, and the repo is public, so a pasted bank line or a
+#    fixture built from a real statement must not survive a commit. Scanned
+#    paths are skills/, toolkit/ and README.md per plugin, never scripts/,
+#    which holds this pattern's own source.
+#    Word boundaries are written as explicit non-alphanumeric context rather
+#    than \b, which BSD grep does not support.
+IBAN_PATTERN='(EE[0-9]{18})|((^|[^A-Za-z0-9])[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}([^A-Za-z0-9]|$))'
+IBAN_SCAN=()
+for plugin_dir in ${PLUGINS[@]+"${PLUGINS[@]}"}; do
+  for t in "$plugin_dir/skills" "$plugin_dir/toolkit" "$plugin_dir/README.md"; do
+    [[ -e "$t" ]] && IBAN_SCAN+=("$t")
+  done
+done
+if [[ "${#IBAN_SCAN[@]}" == 0 ]]; then
+  pass "no plugin content to scan for IBAN-shaped tokens"
+elif grep -rqE "$IBAN_PATTERN" "${IBAN_SCAN[@]}"; then
+  fail "found IBAN-shaped token(s) in plugin content:"
+  grep -rnE "$IBAN_PATTERN" "${IBAN_SCAN[@]}"
+else
+  pass "no IBAN-shaped tokens in plugin content"
+fi
+
 echo
 if [[ "$FAIL" == 1 ]]; then
   echo "lint FAILED"

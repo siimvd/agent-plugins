@@ -1,0 +1,33 @@
+{
+  "name": "finance",
+  "version": "0.1.0",
+  "description": "Personal finance skills: market data providers, on-disk store, analysis toolkit",
+  "author": {
+    "name": "Siim Viidu"
+  },
+  "homepage": "https://github.com/siimvd/agent-plugins",
+  "repository": "https://github.com/siimvd/agent-plugins",
+  "license": "MIT",
+  "keywords": [
+    "finance",
+    "ibkr",
+    "yfinance",
+    "markets"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Finance",
+    "shortDescription": "Market data and analysis skills",
+    "longDescription": "Personal finance skills: market data providers, an on-disk store for price series, and a stdlib analysis toolkit.",
+    "developerName": "Siim Viidu",
+    "category": "Productivity",
+    "capabilities": [
+      "Interactive",
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Correlate the holdings in my watchlist over the last year."
+    ]
+  }
+}

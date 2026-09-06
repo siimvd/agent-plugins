@@ -1,0 +1,6 @@
+# Append to ~/.codex/config.toml, then run `codex mcp login ibkr` to complete
+# IBKR's browser OAuth login and grant the mcp.read scope only; these skills never write.
+
+[mcp_servers.ibkr]
+url = "https://api.ibkr.com/v1/api/mcp-public"
+enabled = true
