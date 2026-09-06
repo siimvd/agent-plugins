@@ -7,7 +7,7 @@ A general-purpose marketplace of plugins for personal and work productivity, cod
 | Plugin | Version | Description |
 |--------|---------|-------------|
 | [`sdd`](./sdd/README.md) | 0.8.0 | Spec Driven Development: setup, brainstorm, plan, build, review, finish |
-| [`tools`](./tools/README.md) | 0.2.0 | Standalone developer utilities |
+| [`tools`](./tools/README.md) | 0.3.0 | Standalone developer utilities |
 | [`finance`](./finance/README.md) | 0.1.0 | Market data providers, on-disk price store, analysis toolkit |
 
 Each plugin's own README has full usage docs. This file covers the marketplace itself.
