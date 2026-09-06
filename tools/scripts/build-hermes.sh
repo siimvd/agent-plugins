@@ -184,6 +184,27 @@ build_skill() {
       echo "Error: $skill_file references '$rel', which is a symlink; refusing to copy" >&2
       exit 1
     fi
+    # Fourth path choke point: -L and -f above only test the final path
+    # component of $rel. A symlinked *intermediate* directory (e.g. $rel is
+    # "subdir/file.txt" and "subdir" is a symlink to somewhere outside the
+    # skill directory) is invisible to both checks -- the kernel follows it
+    # before either test runs. Resolve the physical (symlink-free) directory
+    # that actually holds the referenced file and require it stay inside the
+    # skill directory, per the repo's allowlist-plus-realpath-containment
+    # pattern for external-identifier-as-path bugs.
+    local resolved_dir resolved_base
+    resolved_dir="$(cd "$skill_dir/$(dirname "$rel")" 2>/dev/null && pwd -P)" || {
+      echo "Error: $skill_file references '$rel', whose directory does not resolve" >&2
+      exit 1
+    }
+    resolved_base="$(cd "$skill_dir" && pwd -P)"
+    case "$resolved_dir" in
+      "$resolved_base"|"$resolved_base"/*) ;;
+      *)
+        echo "Error: $skill_file references '$rel', which escapes the skill directory via a symlinked path component" >&2
+        exit 1
+        ;;
+    esac
     ref_files+=("$rel")
   done < <(skill_refs "$skill_file")
 
@@ -225,7 +246,7 @@ build_skill() {
   local f
   for f in "${ref_files[@]+"${ref_files[@]}"}"; do
     mkdir -p "$out_dir/$(dirname "$f")"
-    cp --no-dereference "$skill_dir/$f" "$out_dir/$f"
+    cp -P "$skill_dir/$f" "$out_dir/$f"
     echo "Copied:    $out_dir/$f"
   done
 }
