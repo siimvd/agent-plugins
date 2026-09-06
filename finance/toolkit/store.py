@@ -79,6 +79,10 @@ _META_SUFFIX = ".meta.json"
 #: Longest accepted store key or interval, in characters.
 MAX_COMPONENT_LEN = 64
 
+#: Longest accepted source name, in characters. A source is a short provider
+#: identifier, not an instrument identifier, so it gets a tighter bound.
+MAX_SOURCE_LEN = 32
+
 #: A store key must look like a real instrument identifier. Yahoo tickers use
 #: ``.``, ``-``, ``=`` and a leading ``^`` (``VWCE.DE``, ``LIFCO-B.ST``,
 #: ``EURUSD=X``, ``^GSPC``); IBKR keys use ``_`` (``IBIS2_VWCE``). Everything
@@ -89,19 +93,23 @@ _KEY_RE = re.compile(r"[A-Za-z0-9^][A-Za-z0-9._=^-]*\Z")
 #: An interval is a count plus a unit: 5m, 1h, 1d, 1w, 1wk, 1mo.
 _INTERVAL_RE = re.compile(r"[0-9]+(m|h|d|w|mo|wk)\Z")
 
+#: A source is a short provider identifier (``ibkr``, ``yfinance``). It names a
+#: directory under ``bars/``, so it is held to the same allowlist as a key: no
+#: separators, no leading dot, ASCII alphanumerics plus ``_`` and ``-``.
+_SOURCE_RE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]*\Z")
+
 
 class StoreError(Exception):
     """Raised when a store entry is missing or malformed."""
 
 
-def _check_component(value, label, pattern):
+def _check_component(value, label, pattern, max_len=MAX_COMPONENT_LEN):
     """Raise StoreError unless ``value`` is safe to join into a store path."""
     if not isinstance(value, str) or not value:
         raise StoreError("%s must be a non-empty string, got %r" % (label, value))
-    if len(value) > MAX_COMPONENT_LEN:
+    if len(value) > max_len:
         raise StoreError(
-            "%s is longer than %d characters: %r"
-            % (label, MAX_COMPONENT_LEN, value[:80])
+            "%s is longer than %d characters: %r" % (label, max_len, value[:80])
         )
     if "/" in value or "\\" in value or "\0" in value or ".." in value:
         raise StoreError("%s contains a path separator or '..': %r" % (label, value))
@@ -118,6 +126,11 @@ def validate_key(key_):
 def validate_interval(interval):
     """Return ``interval`` if it is a safe interval name; else raise StoreError."""
     return _check_component(interval, "interval", _INTERVAL_RE)
+
+
+def validate_source(source):
+    """Return ``source`` if it is a safe source name; raise StoreError otherwise."""
+    return _check_component(source, "source", _SOURCE_RE, MAX_SOURCE_LEN)
 
 
 def assert_inside_root(path):
@@ -145,10 +158,14 @@ def bars_dir(source):
 def paths(source, key_, interval):
     """Return ``(csv_path, meta_path)`` for one entry.
 
-    Every read and write funnels through here, so the key and interval are
-    validated and the result is checked against the store root: a traversing
-    key or interval raises :class:`StoreError` instead of reaching the disk.
+    Every read and write funnels through here, so the source, key and interval
+    are validated and the result is checked against the store root: a traversing
+    component raises :class:`StoreError` instead of reaching the disk. The
+    source is checked too, not only the two path-escaping components: a source
+    of ``../s`` resolves *inside* the root but outside ``bars/<source>/``, which
+    ``assert_inside_root`` alone would let through.
     """
+    validate_source(source)
     validate_key(key_)
     validate_interval(interval)
     base = os.path.join(bars_dir(source), "%s_%s" % (key_, interval))

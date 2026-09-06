@@ -486,6 +486,22 @@ class TestPathComponentValidation(StoreTestCase):
         with self.assertRaises(store.StoreError):
             store.paths("../../..", "TESTA", "1d")
 
+    def test_paths_rejects_bad_sources(self):
+        # "../s" resolves back inside the root but outside bars/<source>/, so
+        # the root check alone would not catch it; the allowlist must.
+        for bad in ("../s", "s/t", ".s", "", "s" * 33):
+            with self.subTest(source=bad):
+                with self.assertRaises(store.StoreError):
+                    store.paths(bad, "TESTA", "1d")
+                self.assert_nothing_escaped()
+
+    def test_good_sources_are_accepted(self):
+        for good in ("ibkr", "yfinance", "my-source"):
+            with self.subTest(source=good):
+                self.assertEqual(store.validate_source(good), good)
+                csv_path, _ = store.paths(good, "TESTA", "1d")
+                self.assertIn(os.path.join("bars", good), csv_path)
+
     def test_paths_of_a_valid_entry_stay_inside_the_root(self):
         csv_path, meta_path = store.paths("yfinance", "^GSPC", "1d")
         for path in (csv_path, meta_path):
