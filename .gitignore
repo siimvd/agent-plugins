@@ -12,3 +12,6 @@ node_modules/
 
 # Scratch scope for review/build dispatch (diffs, briefs — never committed)
 .sdd/
+
+# Build worktrees (nested checkouts, never committed)
+.worktrees/

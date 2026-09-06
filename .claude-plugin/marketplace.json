@@ -26,6 +26,16 @@
         "name": "Siim Viidu"
       },
       "license": "MIT"
+    },
+    {
+      "name": "finance",
+      "source": "./finance",
+      "description": "Personal finance skills: market data providers, on-disk store, analysis toolkit",
+      "version": "0.1.0",
+      "author": {
+        "name": "Siim Viidu"
+      },
+      "license": "MIT"
     }
   ]
 }
