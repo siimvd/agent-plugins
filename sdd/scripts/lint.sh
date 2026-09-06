@@ -3,7 +3,8 @@ set -uo pipefail
 
 # Structural lint for every plugin in this marketplace. Checks file
 # existence, frontmatter shape, leftover paste markers, version consistency,
-# and that each build-opencode.sh is deterministic.
+# that each build-opencode.sh and build-hermes.sh is deterministic, and that
+# the committed hermes/ tree matches what its generators produce.
 #
 # This checks STRUCTURE, not BEHAVIOR. A clean run means the plugins' files
 # are internally consistent; it says nothing about whether a skill does the
@@ -209,31 +210,57 @@ else
   pass "Codex plugin validator not found locally, skipped"
 fi
 
-# 7. Every plugin's build-opencode.sh output is byte-identical across two runs.
-#    All plugins write into the same .opencode/ tree, so the snapshot is taken
-#    after running every build script, and compared across two full passes.
-BUILD_SCRIPTS=()
+# 7. Every plugin's build-opencode.sh and build-hermes.sh output is
+#    byte-identical across two runs. All plugins write into the same .opencode/
+#    and hermes/ trees, so the snapshots are taken after running every build
+#    script, and compared across two full passes.
+#    A plugin opts into the Hermes checks (this one plus sections 9-11) purely
+#    by having an executable scripts/build-hermes.sh, so a plugin whose skills
+#    are not converted yet is left alone until its generator exists.
+OPENCODE_BUILD_SCRIPTS=()
+HERMES_BUILD_SCRIPTS=()
+HERMES_PLUGINS=()
 for plugin_dir in ${PLUGINS[@]+"${PLUGINS[@]}"}; do
-  [[ -x "$plugin_dir/scripts/build-opencode.sh" ]] && BUILD_SCRIPTS+=("$plugin_dir/scripts/build-opencode.sh")
+  [[ -x "$plugin_dir/scripts/build-opencode.sh" ]] && OPENCODE_BUILD_SCRIPTS+=("$plugin_dir/scripts/build-opencode.sh")
+  if [[ -x "$plugin_dir/scripts/build-hermes.sh" ]]; then
+    HERMES_BUILD_SCRIPTS+=("$plugin_dir/scripts/build-hermes.sh")
+    HERMES_PLUGINS+=("$plugin_dir")
+  fi
 done
 
-if [[ "${#BUILD_SCRIPTS[@]}" == 0 ]]; then
-  pass "no build-opencode.sh scripts to check"
+# The committed hermes/ tree as it stands before any generator runs. This is
+# exactly what a Hermes tap fetches from GitHub, and the builds below overwrite
+# it in place, so sections 10 and 11 need it captured here or they would only
+# ever see freshly generated content and a hand edit would pass unnoticed.
+HERMES_STATUS_BEFORE="$(git status --porcelain hermes/ 2>/dev/null)"
+HERMES_PREBUILD=""
+if [[ "${#HERMES_BUILD_SCRIPTS[@]}" != 0 && -d hermes ]]; then
+  HERMES_PREBUILD="$(mktemp -d)"
+  cp -R hermes "$HERMES_PREBUILD/hermes"
+fi
+
+if [[ "${#OPENCODE_BUILD_SCRIPTS[@]}" == 0 && "${#HERMES_BUILD_SCRIPTS[@]}" == 0 ]]; then
+  pass "no build-opencode.sh or build-hermes.sh scripts to check"
 else
+  # Both trees go into one snapshot directory under distinct names, so a single
+  # recursive diff covers them and neither can mask the other.
   snapshot_build() {
-    for build_script in "${BUILD_SCRIPTS[@]}"; do
+    for build_script in ${OPENCODE_BUILD_SCRIPTS[@]+"${OPENCODE_BUILD_SCRIPTS[@]}"} \
+                        ${HERMES_BUILD_SCRIPTS[@]+"${HERMES_BUILD_SCRIPTS[@]}"}; do
       "./$build_script" >/dev/null || fail "$build_script: exited non-zero"
     done
-    cp -R .opencode/. "$1"
+    [[ -d .opencode ]] && cp -R .opencode "$1/opencode"
+    [[ -d hermes ]] && cp -R hermes "$1/hermes"
+    return 0
   }
   first_run="$(mktemp -d)"
   second_run="$(mktemp -d)"
   snapshot_build "$first_run"
   snapshot_build "$second_run"
   if diff -rq "$first_run" "$second_run" >/dev/null; then
-    pass "build-opencode.sh output deterministic (${#BUILD_SCRIPTS[@]} script(s))"
+    pass "build script output deterministic (${#OPENCODE_BUILD_SCRIPTS[@]} OpenCode, ${#HERMES_BUILD_SCRIPTS[@]} Hermes)"
   else
-    fail "build-opencode.sh output changed across two runs"
+    fail "build script output changed across two runs"
     diff -rq "$first_run" "$second_run"
   fi
   rm -rf "$first_run" "$second_run"
@@ -261,6 +288,94 @@ elif grep -rqE "$IBAN_PATTERN" "${IBAN_SCAN[@]}"; then
 else
   pass "no IBAN-shaped tokens in plugin content"
 fi
+
+# 9. Every skill in a Hermes-enabled plugin carries a hermes-description that
+#    fits Hermes's system-prompt index. Hermes truncates each entry at
+#    SKILL_PROMPT_DESC_LIMIT (60) minus the "..." it appends, so anything past
+#    57 characters is cut mid-phrase. The value is hand-authored, and
+#    build-hermes.sh only warns and skips the skill, so this is where a missing
+#    or over-budget one becomes a hard failure.
+HERMES_DESC_LIMIT=57
+BLOCK_SCALAR_RE='^[|>][-+]?$'
+HERMES_SKILL_FILES=()
+for plugin_dir in ${HERMES_PLUGINS[@]+"${HERMES_PLUGINS[@]}"}; do
+  for f in "$plugin_dir"/skills/*/SKILL.md; do HERMES_SKILL_FILES+=("$f"); done
+done
+
+if [[ "${#HERMES_SKILL_FILES[@]}" == 0 ]]; then
+  pass "no Hermes-enabled plugin skills to check for hermes-description"
+else
+  for skill_file in "${HERMES_SKILL_FILES[@]}"; do
+    frontmatter=$(awk '/^---$/{n++; next} n==1' "$skill_file")
+    if ! echo "$frontmatter" | grep -q '^hermes-description:'; then
+      fail "$skill_file: frontmatter missing 'hermes-description' (required: the plugin has a build-hermes.sh)"
+      continue
+    fi
+    hermes_desc=$(echo "$frontmatter" | grep -m1 '^hermes-description:' | sed 's/^hermes-description: *//')
+    # A YAML block indicator (>- | > and friends) means the value continues on
+    # the following lines. Hermes's index entry is one line, so reject it.
+    # The pattern is held in a variable so bash 3.2 reads it as a regex rather
+    # than needing backslashes that a bracket expression would take literally.
+    if [[ -z "$hermes_desc" || "$hermes_desc" =~ $BLOCK_SCALAR_RE ]]; then
+      fail "$skill_file: 'hermes-description' must be a non-empty single line, not a block scalar"
+    elif [[ "${#hermes_desc}" -gt "$HERMES_DESC_LIMIT" ]]; then
+      fail "$skill_file: 'hermes-description' is ${#hermes_desc} characters, over the $HERMES_DESC_LIMIT limit"
+    fi
+  done
+  pass "hermes-description budget checked (${#HERMES_SKILL_FILES[@]} skill(s))"
+fi
+
+# 10. The committed hermes/ tree matches what the generators produce, and
+#     nothing under it was edited by hand. Section 7 has already run every
+#     build-hermes.sh, so a dirty tree afterwards means a stale commit; a tree
+#     that was dirty beforehand means someone edited generated output directly,
+#     which the build would otherwise have quietly reverted.
+if [[ "${#HERMES_BUILD_SCRIPTS[@]}" == 0 ]]; then
+  pass "no build-hermes.sh scripts, hermes/ freshness not checked"
+else
+  hermes_status_after="$(git status --porcelain hermes/ 2>/dev/null)"
+  if [[ -n "$HERMES_STATUS_BEFORE" ]]; then
+    fail "hermes/ was not clean before the build: edit the canonical skill and rerun build-hermes.sh, never hermes/ directly"
+    echo "$HERMES_STATUS_BEFORE"
+  fi
+  if [[ -n "$hermes_status_after" ]]; then
+    fail "hermes/ is stale: rerun the plugins' build-hermes.sh and commit the result"
+    echo "$hermes_status_after"
+    git diff -- hermes/
+  fi
+  if [[ -z "$HERMES_STATUS_BEFORE" && -z "$hermes_status_after" ]]; then
+    pass "hermes/ matches its generated output"
+  fi
+fi
+
+# 11. No Claude Code leftovers in the Hermes tree. build-hermes.sh rewrites
+#     \${CLAUDE_SKILL_DIR} to \${HERMES_SKILL_DIR} and the sentence naming the
+#     runtime that substitutes it; either one surviving means a reference
+#     Hermes cannot resolve. Both the committed tree captured before the build
+#     (what a tap actually fetches) and the freshly generated one (which would
+#     expose a gap in the rewriting) are scanned.
+HERMES_LEFTOVER_SCAN=()
+[[ -n "$HERMES_PREBUILD" ]] && HERMES_LEFTOVER_SCAN+=("$HERMES_PREBUILD/hermes")
+[[ "${#HERMES_BUILD_SCRIPTS[@]}" != 0 && -d hermes ]] && HERMES_LEFTOVER_SCAN+=("hermes")
+
+if [[ "${#HERMES_LEFTOVER_SCAN[@]}" == 0 ]]; then
+  pass "no Hermes tree to scan for Claude leftovers"
+else
+  hermes_leftovers=0
+  for marker in '${CLAUDE_' 'substituted automatically by Claude Code'; do
+    if grep -rqF "$marker" "${HERMES_LEFTOVER_SCAN[@]}"; then
+      fail "found Claude leftover '$marker' in hermes/:"
+      # Rewrite the pre-build copy's temp prefix back to a repo-relative path,
+      # then dedupe: a genuine leftover appears in both scanned trees.
+      grep -rnF "$marker" "${HERMES_LEFTOVER_SCAN[@]}" \
+        | sed "s|^${HERMES_PREBUILD:-/dev/null}/||" \
+        | awk '!seen[$0]++'
+      hermes_leftovers=1
+    fi
+  done
+  [[ "$hermes_leftovers" == 0 ]] && pass "no Claude leftovers in hermes/"
+fi
+[[ -n "$HERMES_PREBUILD" ]] && rm -rf "$HERMES_PREBUILD"
 
 echo
 if [[ "$FAIL" == 1 ]]; then
