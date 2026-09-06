@@ -19,7 +19,7 @@ only, and never call a write tool. Grant the `mcp.read` scope where your client 
 
 | Skill | Description |
 |-------|-------------|
-| _(none yet)_ | Skills land in later tasks of this build. |
+| `yfinance-data` | Fetch price history and fundamentals from Yahoo Finance into the store, for US tickers and EU listings with a Yahoo venue suffix. |
 
 This plugin ships no agents. There is no `finance/agents/` directory.
 
