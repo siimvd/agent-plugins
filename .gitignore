@@ -10,6 +10,11 @@ node_modules/
 # Generated OpenCode commands
 .opencode/
 
+# hermes/ is generated too, but is deliberately not ignored. A Hermes tap
+# installs a skill by fetching its file paths from GitHub, so the generated
+# tree has to be committed to be installable. .opencode/ is local-only build
+# output that nothing fetches remotely, so it stays ignored.
+
 # Scratch scope for review/build dispatch (diffs, briefs — never committed)
 .sdd/
 

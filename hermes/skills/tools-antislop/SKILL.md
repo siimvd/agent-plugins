@@ -1,14 +1,9 @@
 ---
-name: antislop
-description: >-
-  Standing quality bar for any written output, applied automatically, not only when asked. Covers
-  chat replies, documents, READMEs, specs, commit messages, PR descriptions, code comments, and
-  any file being created or modified whose content is prose. Strips AI-sounding vocabulary,
-  filler, formulaic rhetoric (rule of three, "not just X but Y", corporate tricolons), and
-  formatting tells (em dashes, title-case headers, boldface overuse), then restores plain,
-  specific, human-sounding writing. Skip for code, direct quotes, and wording a source requires
-  verbatim.
-hermes-description: Strip AI-sounding filler from any prose before finishing.
+name: tools-antislop
+description: Strip AI-sounding filler from any prose before finishing.
+version: 0.3.0
+author: Siim Viidu
+license: MIT
 ---
 
 # Antislop
@@ -72,9 +67,9 @@ a log line) don't need a full pass, but shouldn't contain the vocabulary tells b
 
 Full vocabulary and jargon lists (abstract-metaphor nouns like "substrate," "vector," "north
 star"; press-release phrases; chatbot scaffolding) are in
-`${CLAUDE_SKILL_DIR}/references/patterns.md`. Reach for it on longer or higher-stakes pieces; the
-table above covers most day-to-day writing. (`${CLAUDE_SKILL_DIR}` is this skill's own directory,
-substituted automatically by Claude Code. On a tool that doesn't substitute it, resolve it
+`${HERMES_SKILL_DIR}/references/patterns.md`. Reach for it on longer or higher-stakes pieces; the
+table above covers most day-to-day writing. (`${HERMES_SKILL_DIR}` is this skill's own directory,
+substituted automatically by Hermes. On a tool that doesn't substitute it, resolve it
 yourself as this skill's directory, using this file's known location.)
 
 ## Cut entirely
@@ -131,3 +126,15 @@ precise-sounding fabrication.
 AI-tool citation artifacts sometimes leak into pasted text verbatim: `oaicite`, `turn0search0`,
 `contentReference`, `[cite: 1]`. If any of these appear, it's a bug, not a style choice. Delete
 them.
+
+---
+
+## When to use this skill
+
+Standing quality bar for any written output, applied automatically, not only when asked. Covers
+chat replies, documents, READMEs, specs, commit messages, PR descriptions, code comments, and
+any file being created or modified whose content is prose. Strips AI-sounding vocabulary,
+filler, formulaic rhetoric (rule of three, "not just X but Y", corporate tricolons), and
+formatting tells (em dashes, title-case headers, boldface overuse), then restores plain,
+specific, human-sounding writing. Skip for code, direct quotes, and wording a source requires
+verbatim.
