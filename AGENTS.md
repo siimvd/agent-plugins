@@ -167,3 +167,9 @@ For bug fixes, config changes, or anything under 30 minutes:
 7. Comment on the issue with the PR link
 
 Skip planning ceremony. Keep quality standards.
+
+---
+
+## Mistakes Log (add new ones with date)
+
+- 2026-09-06: tickers and symbols taken from API responses were joined into filesystem paths unvalidated (path traversal, found only by a branch-wide security pass after nine clean per-task reviews). Rule: any external identifier that becomes a path component is validated at one choke point with an allowlist plus a realpath containment check, and the task that introduces it carries a `../` test.
