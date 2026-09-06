@@ -95,7 +95,7 @@ class TestDelayedDaily(IngestTestCase):
         self.assertEqual(sidecar["bar_count"], 12)
         self.assertEqual(sidecar["start"], "2026-08-03")
         self.assertEqual(sidecar["end"], "2026-08-14")
-        self.assertIsNone(sidecar["adjusted"])
+        self.assertIs(sidecar["adjusted"], False)
 
     def test_bars_round_trip_through_the_store(self):
         ingest.ingest_ibkr_history(
@@ -318,13 +318,13 @@ class TestRegistryLink(IngestTestCase):
 
 
 class TestAdjustedFlag(IngestTestCase):
-    def test_default_is_null(self):
+    def test_default_is_false(self):
         code, out, _ = self.run_cli(
             ["ibkr-history", DELAYED_FIXTURE, "--symbol", "TESTA",
              "--exchange", "TESTX", "--currency", "EUR", "--json"]
         )
         self.assertEqual(code, 0)
-        self.assertIsNone(json.loads(out)["adjusted"])
+        self.assertIs(json.loads(out)["adjusted"], False)
 
     def test_true_and_false_and_null(self):
         for text, expected in (("true", True), ("false", False), ("null", None)):

@@ -26,10 +26,13 @@ This is a system boundary, so the whole response is validated before anything
 is written — array lengths, presence of the required series, timestamps and
 prices. A rejected response leaves no partial entry behind.
 
-``adjusted`` defaults to None (unknown). Whether IBKR closes are split- and
-dividend-adjusted is an empirical question answered in Task 8 and recorded in
-the ``ibkr-data`` skill's ``references/quirks.md``; until then the sidecar says
-"unknown" rather than asserting either way, and ``--adjusted`` overrides it.
+``adjusted`` defaults to False. Checked on 2026-09-06 against a distributing
+UCITS ETF around an ex-dividend date: IBKR closes tracked the unadjusted
+series and sat a full dividend above the adjusted one, so IBKR history is not
+dividend-adjusted (splits were not in the window and remain untested). The
+comparison is recorded in the ``ibkr-data`` skill's ``references/quirks.md``.
+``--adjusted true|false|null`` still overrides, and ``null`` remains available
+for a response whose provenance is unknown.
 
 Usage as a library::
 
@@ -177,7 +180,7 @@ def ingest_ibkr_history(
     currency,
     interval=None,
     contract_id=None,
-    adjusted=None,
+    adjusted=False,
 ):
     """Write one IBKR history response to the store; return its sidecar.
 
@@ -296,8 +299,8 @@ def build_parser():
     history.add_argument(
         "--adjusted",
         choices=sorted(_ADJUSTED_VALUES),
-        default="null",
-        help="whether closes are split/dividend adjusted (default: null)",
+        default="false",
+        help="whether closes are split/dividend adjusted (default: false)",
     )
     history.add_argument("--json", action="store_true", help="machine-readable output")
     history.set_defaults(func=_cmd_ibkr_history)

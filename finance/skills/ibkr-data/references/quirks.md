@@ -66,11 +66,48 @@ That is why the store keys bars provider-natively (`AEB_IWDA`) and why the regis
 ISIN has to come from the user or from the query that found the contract, and it is then written
 into `registry.json` by hand. Never infer an ISIN from a symbol.
 
-## Adjustment finding
+## Adjustment finding: IBKR closes are not dividend-adjusted (2026-09-06)
 
-PENDING: supplied by orchestrator
+Checked on VWRL at AEB (Vanguard FTSE All-World, distributing), IBKR `get_price_history` with
+`period: THREE_MONTHS`, `step: ONE_DAY` and `include_corporate_actions: true`. The response's
+`corp_actions` reported a CashDividend with ex-date 2026-06-18 of USD 0.905474 (yfinance reported
+the same distribution as EUR 0.7883). The same window was fetched from yfinance twice, with
+`auto_adjust=False` and with `auto_adjust=True`:
 
-Until this is filled in, `ingest.py` writes `adjusted: null` for IBKR series, meaning unknown, and
-`--adjusted true|false` overrides it per fetch. Unknown is the honest value: mixing an adjusted
-series with an unadjusted one corrupts every return computed across a dividend or a split, and a
-null flag at least makes the mixing detectable.
+| date | IBKR close | yfinance raw (`auto_adjust=False`) | yfinance adjusted |
+|---|---|---|---|
+| 2026-06-16 | 159.80 | 159.86 | 159.07 |
+| 2026-06-17 | 160.28 | 160.26 | 159.47 |
+| 2026-06-18 (ex) | 160.24 | 160.36 | 160.36 |
+| 2026-06-19 | 160.30 | 160.30 | 160.30 |
+
+Before the ex-date the IBKR closes match the unadjusted series within a few cents and sit about
+0.79 above the adjusted series, which is the distribution. From the ex-date onward the three series
+agree, because adjustment only rewrites history before the event.
+
+Conclusion: IBKR history closes are not dividend-adjusted. `ingest.py` therefore defaults
+`--adjusted` to `false` for IBKR series, and `--adjusted true|false|null` still overrides per fetch.
+Split adjustment was not tested: no split fell inside the window.
+
+The consequence is that an IBKR leg and a yfinance leg of the same instrument drift apart by the
+accumulated distributions, growing with every ex-date in the window. `returns.py pair` warns when
+the two sidecars disagree on `adjusted`. For a total-return series, use `yfinance-data`, which
+stores `adjusted: true`; use IBKR when the price actually traded is what matters, or when the
+instrument is an EU listing Yahoo covers badly.
+
+## The documented behaviour held on a live run (2026-09-06)
+
+Three ingests were run end to end against the live server: AAPL through SMART, IWDA on AEB, and
+EUR.USD on IDEALPRO as `CASH`. Each behaved as this document describes. The US series carried
+`delayed_sec 0` and `price_source Last`; the AEB series carried `delayed_sec 900` and
+`price_source Last`; the FX series carried `price_source MidPoint`, no volume, and session dates
+taken from the UTC date of the 21:15Z stamp, which is the same calendar day the pair traded.
+Observed context cost matched the prediction in the skill: each response entered the transcript
+once and was re-emitted once by the heredoc write, so roughly twice its size.
+
+## Not verified
+
+- Whether `${CLAUDE_PLUGIN_ROOT}` is substituted inside an installed SKILL.md at runtime. The check
+  was run from a worktree, not from an installed plugin, so it stays open. Both finance skills carry
+  the fallback sentence, so the path resolves either way.
+- Whether any client can be made to request only `mcp.read` at OAuth time. See `setup.md`.

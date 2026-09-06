@@ -72,6 +72,13 @@ If the client cannot be limited to `mcp.read`, read-only stays a rule of this pl
 property of the token: no skill here calls a write tool. Revoking access entirely is done from
 IBKR's Client Portal, under the third-party application settings for the account.
 
+### Not verified
+
+Whether any client can request only `mcp.read` at OAuth time is still unverified as of 2026-09-06.
+The live checks were run through an already-authorised connection, so the consent screen's options
+were not exercised. Treat the steps above as how to find out, not as a claim about what any
+particular client does.
+
 ## When the tools are absent
 
 Say so and stop. The failure modes look different but the response is the same:

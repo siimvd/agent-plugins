@@ -90,6 +90,11 @@ Currency comes from the contract and the venue, never from a label in a response
 is optional and worth passing, since it is what makes a re-fetch reproducible. `--interval` is
 inferred from `chart_step` and only needs passing when the script says it cannot name the step.
 
+`--adjusted` defaults to `false` for IBKR series, because IBKR history closes are not
+dividend-adjusted (checked 2026-06-18 ex-date on VWRL, recorded in `quirks.md`). Override it with
+`--adjusted true` only for a response you know to be adjusted, or `--adjusted null` when the
+provenance of a saved file is genuinely unknown. Leave it alone for a normal fetch.
+
 ### 5. Register a new instrument
 
 ```bash
