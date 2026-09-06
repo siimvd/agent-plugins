@@ -175,6 +175,15 @@ build_skill() {
       echo "Warning: $skill_file references $rel, which does not exist, skipping skill" >&2
       return 1
     fi
+    # Third path choke point: cp follows symlinks by default, so a symlinked
+    # reference would copy its target's contents -- possibly from outside the
+    # skill directory entirely -- into the committed output tree. Fail loud
+    # rather than silently dereferencing or skipping, matching the traversal
+    # check above.
+    if [[ -L "$skill_dir/$rel" ]]; then
+      echo "Error: $skill_file references '$rel', which is a symlink; refusing to copy" >&2
+      exit 1
+    fi
     ref_files+=("$rel")
   done < <(skill_refs "$skill_file")
 
@@ -216,7 +225,7 @@ build_skill() {
   local f
   for f in "${ref_files[@]+"${ref_files[@]}"}"; do
     mkdir -p "$out_dir/$(dirname "$f")"
-    cp "$skill_dir/$f" "$out_dir/$f"
+    cp --no-dereference "$skill_dir/$f" "$out_dir/$f"
     echo "Copied:    $out_dir/$f"
   done
 }
