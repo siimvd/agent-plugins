@@ -21,6 +21,7 @@ only, and never call a write tool. Grant the `mcp.read` scope where your client 
 |-------|-------------|
 | `ibkr-data` | Fetch price history from Interactive Brokers through IBKR's remote MCP server into the store, including EU venues (AEB, IBIS2, LSEETF) and FX from IDEALPRO. Read-only. |
 | `yfinance-data` | Fetch price history and fundamentals from Yahoo Finance into the store, for US tickers and EU listings with a Yahoo venue suffix. |
+| `stock-correlation` | Correlation, beta and rolling correlation between stored series, with provenance, overlap and the caveats that go with them. |
 
 This plugin ships no agents. There is no `finance/agents/` directory.
 
