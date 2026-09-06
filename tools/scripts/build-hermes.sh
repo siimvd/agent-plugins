@@ -258,10 +258,30 @@ if [[ "${#skill_dirs[@]}" == 0 ]]; then
   exit 0
 fi
 
-# Validate every name before touching the filesystem, so a bad one stops the
-# run before any output is written or removed.
+# Validate every name and location before touching the filesystem, so a bad
+# one stops the run before any output is written or removed. The basename
+# regex alone isn't enough: bash's */ glob also matches a symlinked directory,
+# and everything build_skill does for a reference path (choke points two
+# through four) trusts $skill_dir as the root it resolves against. A symlink
+# at tools/skills/<name> would make all of that validate against the wrong
+# root. Resolve each skill directory's physical path with pwd -P and require
+# it stay inside the plugin's real skills/ directory, the same
+# allowlist-plus-realpath-containment pattern used one level down for
+# reference paths.
+SKILLS_ROOT_REAL="$(cd "$PLUGIN_DIR/skills" && pwd -P)"
 for skill_dir in "${skill_dirs[@]}"; do
   validate_skill_name "$(basename "${skill_dir%/}")"
+  resolved_skill_dir="$(cd "${skill_dir%/}" 2>/dev/null && pwd -P)" || {
+    echo "Error: skill directory '$skill_dir' does not resolve" >&2
+    exit 1
+  }
+  case "$resolved_skill_dir" in
+    "$SKILLS_ROOT_REAL"/*) ;;
+    *)
+      echo "Error: skill directory '$skill_dir' escapes $SKILLS_ROOT_REAL via a symlink" >&2
+      exit 1
+      ;;
+  esac
 done
 
 if [[ ! -f "$MANIFEST" ]]; then
