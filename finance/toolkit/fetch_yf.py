@@ -202,6 +202,25 @@ def _bar_rows(raw_rows, interval):
     return rows
 
 
+def normalise_currency(raw):
+    """Return ``(iso_code, price_scale)`` for a Yahoo currency label.
+
+    Yahoo quotes most London lines in pence and says so with a case-sensitive
+    ``GBp`` (older payloads use ``GBX``). Upper-casing that to ``GBP`` would
+    record pounds for prices that are pence, off by a factor of 100 and
+    undetectable downstream. So pence is converted at ingest: prices are
+    scaled and the store keeps an ISO code, which is what the pair lookups in
+    ``fx.py`` expect. The raw label and the factor go into the sidecar as
+    ``source_currency`` and ``price_scale``, so the original quote is
+    recoverable.
+    """
+    if not raw:
+        return None, 1
+    if raw in ("GBp", "GBX"):
+        return "GBP", 0.01
+    return str(raw).upper(), 1
+
+
 def _isin_for(ticker):
     """Return the registry's ISIN for this ticker, or None when unknown.
 
@@ -236,13 +255,20 @@ def fetch_bars(ticker, period="1y", interval="1d", downloader=None):
         )
 
     fast = source.fast_info(ticker) or {}
-    currency = fast.get("currency")
+    raw_currency = fast.get("currency")
     exchange = fast.get("exchange")
+    currency, scale = normalise_currency(raw_currency)
+    if scale != 1:
+        for row in rows:
+            for field in PRICE_FIELDS:
+                row[field] = row[field] * scale
     meta = {
         "symbol": ticker,
         "exchange": str(exchange) if exchange else None,
         "contract_id": None,
-        "currency": str(currency).upper() if currency else None,
+        "currency": currency,
+        "source_currency": raw_currency if raw_currency is None else str(raw_currency),
+        "price_scale": scale,
         "adjusted": True,
         "delayed_sec": 0,
         "price_source": "Close",

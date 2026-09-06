@@ -228,6 +228,46 @@ class BarsTest(FetchYfTestCase):
 
         self.assertEqual(sidecar["isin"], ISIN_TESTA)
 
+    def test_pence_quotes_are_converted_to_pounds(self):
+        # Yahoo quotes most London lines in pence and marks it with the
+        # case-sensitive "GBp". Storing 601.7 under currency GBP would be off
+        # by a factor of 100 for anything reading the store later.
+        rows = [bar("2026-09-04", "2026-09-03T23:00:00Z", close=601.7)]
+        fake = FakeDownloader(rows=rows, fast={"currency": "GBp", "exchange": "LSE"})
+
+        sidecar = fetch_yf.fetch_bars("TESTA.L", downloader=fake)
+
+        self.assertEqual(sidecar["currency"], "GBP")
+        self.assertEqual(sidecar["source_currency"], "GBp")
+        self.assertEqual(sidecar["price_scale"], 0.01)
+
+        stored, _ = store.read_bars("yfinance", "TESTA.L", "1d")
+        self.assertAlmostEqual(stored[0]["close"], 6.017, delta=1e-9)
+        self.assertAlmostEqual(stored[0]["open"], 6.007, delta=1e-9)
+        self.assertEqual(stored[0]["volume"], 100.0)
+
+    def test_gbx_is_treated_as_pence(self):
+        rows = [bar("2026-09-04", "2026-09-03T23:00:00Z", close=601.7)]
+        fake = FakeDownloader(rows=rows, fast={"currency": "GBX"})
+
+        sidecar = fetch_yf.fetch_bars("TESTA.L", downloader=fake)
+
+        self.assertEqual(sidecar["currency"], "GBP")
+        self.assertEqual(sidecar["source_currency"], "GBX")
+        self.assertEqual(sidecar["price_scale"], 0.01)
+
+    def test_an_ordinary_currency_is_recorded_unscaled(self):
+        fake = FakeDownloader(rows=daily_rows(), fast={"currency": "USD"})
+
+        sidecar = fetch_yf.fetch_bars("TESTA", downloader=fake)
+
+        self.assertEqual(sidecar["currency"], "USD")
+        self.assertEqual(sidecar["source_currency"], "USD")
+        self.assertEqual(sidecar["price_scale"], 1)
+
+        stored, _ = store.read_bars("yfinance", "TESTA", "1d")
+        self.assertEqual(stored[0]["close"], 10.0)
+
     def test_missing_fast_info_leaves_currency_null(self):
         fake = FakeDownloader(rows=daily_rows(), fast={})
 

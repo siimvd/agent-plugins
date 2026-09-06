@@ -43,10 +43,15 @@ A lightweight lookup that skips the full quote payload.
 
 ```python
 fi = yf.Ticker("GLEN.L").fast_info
-fi["currency"]   # "GBp" for London, meaning pence
+fi["currency"]   # "GBp" for London, meaning pence (older payloads: "GBX")
 fi["exchange"]   # "LSE", "GER", "AMS", "STO", "NMS"
 fi["lastPrice"]
 ```
+
+`GBp` and `GBX` are Yahoo's case-sensitive pence markers, not ISO codes. The fetcher detects them,
+divides the OHLC prices by 100 and writes `currency: "GBP"`, keeping the raw label as
+`source_currency` and the factor as `price_scale` in the sidecar. Every other currency is
+upper-cased and stored with `price_scale: 1`. Volume is never scaled.
 
 It supports both key and attribute access, and raises for a key it does not carry, so wrap lookups
 rather than assuming a field is present. The fetcher takes `currency` and `exchange` from here

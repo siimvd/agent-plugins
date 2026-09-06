@@ -54,10 +54,13 @@ Intervals: `1m`, `2m`, `5m`, `15m`, `30m`, `60m`, `90m`, `1h`, `1d`, `1wk`, `1mo
 | Xetra | `.DE` | `VWCE.DE` | EUR |
 | Euronext Amsterdam | `.AS` | `IWDA.AS` | EUR |
 | Nasdaq Stockholm | `.ST` | `LIFCO-B.ST` | SEK |
-| London | `.L` | `GLEN.L` | GBp, meaning pence |
+| London | `.L` | `GLEN.L` | GBP, converted from pence on write |
 
-London quotes come back in pence, not pounds, and the sidecar records `GBp` because that is what the
-venue means. Anything converting a `.L` series to EUR has to divide by 100 first.
+Yahoo quotes most London lines in pence, not pounds, and marks it with a case-sensitive `GBp` (older
+payloads say `GBX`). The fetcher divides those prices by 100 and stores `currency: GBP`, so the store
+only ever holds ISO codes and a `.L` series can be compared with a EUR or USD one without a hidden
+factor of 100. The sidecar keeps `source_currency: GBp` and `price_scale: 0.01` so the original quote
+is recoverable. Volume is untouched.
 
 Never guess a suffix. The same fund trades under different tickers on different venues, and a wrong
 guess returns either nothing or another instrument's prices. If the venue is not known, ask which
@@ -67,7 +70,8 @@ listing is meant.
 
 After a `bars` run, report: the ticker and store key, the bar count and date range, `source:
 yfinance`, the currency, `adjusted: true`, the as-of date (the last bar), and the ISIN when the
-sidecar carries one. Yahoo bars are fetched with `auto_adjust=True`, so closes are split- and
+sidecar carries one. When `price_scale` is not 1, say so and name the `source_currency`: a `.L`
+series stored as GBP was quoted in pence and divided by 100 on write. Yahoo bars are fetched with `auto_adjust=True`, so closes are split- and
 dividend-adjusted; say so, because mixing them with an unadjusted series corrupts every return
 computed downstream.
 
