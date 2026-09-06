@@ -8,6 +8,7 @@ description: >-
   formatting tells (em dashes, title-case headers, boldface overuse), then restores plain,
   specific, human-sounding writing. Skip for code, direct quotes, and wording a source requires
   verbatim.
+hermes-description: Strip AI-sounding filler from any prose before finishing.
 ---
 
 # Antislop
