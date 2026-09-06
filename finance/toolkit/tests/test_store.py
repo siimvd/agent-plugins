@@ -224,6 +224,40 @@ class TestWriteRead(StoreTestCase):
         with self.assertRaises(ValueError):
             store.write_bars("ibkr", "IBIS2_TESTA", "1d", [], {})
 
+    def test_write_rejects_row_missing_close(self):
+        rows = make_rows(3)
+        del rows[1]["close"]
+        with self.assertRaises(ValueError) as caught:
+            store.write_bars("ibkr", "IBIS2_TESTA", "1d", rows, {})
+        message = str(caught.exception)
+        self.assertIn("1", message)
+        self.assertIn("close", message)
+        csv_path, _ = store.paths("ibkr", "IBIS2_TESTA", "1d")
+        self.assertFalse(os.path.exists(csv_path))
+
+    def test_write_rejects_row_with_none_price(self):
+        rows = make_rows(2)
+        rows[0]["open"] = None
+        with self.assertRaises(ValueError):
+            store.write_bars("ibkr", "IBIS2_TESTA", "1d", rows, {})
+
+    def test_write_rejects_row_missing_date(self):
+        rows = make_rows(2)
+        del rows[0]["date"]
+        with self.assertRaises(ValueError) as caught:
+            store.write_bars("ibkr", "IBIS2_TESTA", "1d", rows, {})
+        self.assertIn("date", str(caught.exception))
+
+    def test_write_accepts_row_with_no_volume_key(self):
+        rows = make_rows(2)
+        for row in rows:
+            del row["volume"]
+        meta = store.write_bars("ibkr", "IDEALPRO_TESTFX", "1d", rows, {})
+        self.assertEqual(meta["bar_count"], 2)
+        back, _ = store.read_bars("ibkr", "IDEALPRO_TESTFX", "1d")
+        self.assertIsNone(back[0]["volume"])
+        self.assertEqual(back[1]["close"], 101.5)
+
     def test_intraday_entry_round_trips(self):
         rows = [
             {

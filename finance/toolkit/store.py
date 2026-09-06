@@ -165,17 +165,35 @@ def _format_number(value):
     return repr(float(value))
 
 
+#: Row fields that must be present on every bar. ``volume`` is deliberately
+#: absent: FX bars carry no volume, so it may be missing or None.
+REQUIRED_ROW_FIELDS = ("date", "open", "high", "low", "close")
+
+
+def _check_rows(rows):
+    """Raise ValueError naming the row and field when a price field is absent."""
+    for index, row in enumerate(rows):
+        for field in REQUIRED_ROW_FIELDS:
+            if row.get(field) is None:
+                raise ValueError(
+                    "row %d is missing required field %r" % (index, field)
+                )
+
+
 def write_bars(source, key_, interval, rows, meta=None):
     """Write one entry's CSV and sidecar; return the sidecar that was written.
 
-    ``rows`` is a list of dicts with ``date, open, high, low, close, volume``;
-    ``volume`` may be None and is then written as an empty cell. Rows are
-    sorted ascending by ``date`` before writing. ``meta`` is merged over the
-    computed fields; every field in :data:`OPTIONAL_META_FIELDS` is present in
-    the sidecar, as JSON null when the caller did not supply it.
+    ``rows`` is a list of dicts with ``date, open, high, low, close, volume``.
+    Every field in :data:`REQUIRED_ROW_FIELDS` must be present and non-None on
+    every row, or ValueError is raised naming the row index and the field.
+    ``volume`` may be absent or None and is then written as an empty cell.
+    Rows are sorted ascending by ``date`` before writing. ``meta`` is merged
+    over the computed fields; every field in :data:`OPTIONAL_META_FIELDS` is
+    present in the sidecar, as JSON null when the caller did not supply it.
     """
     if not rows:
         raise ValueError("refusing to write an entry with no rows")
+    _check_rows(rows)
 
     ordered = sorted(rows, key=lambda row: row["date"])
 
