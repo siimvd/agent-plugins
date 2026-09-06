@@ -65,8 +65,9 @@ so in the answer.
 
 Sessions on different continents also do not overlap in clock time. The European close is hours
 before the US close, so same-date returns compare partially different information sets and a
-cross-venue correlation understates the contemporaneous relationship. Lead-lag correction is not
-implemented.
+cross-venue correlation understates the contemporaneous relationship. Weekly bars mostly absorb the
+gap, and an EU name's US listing removes it entirely by putting both legs in one session. Lagging
+one leg by a day is not implemented and is a later toolkit item.
 
 ## Adjusted mismatch
 

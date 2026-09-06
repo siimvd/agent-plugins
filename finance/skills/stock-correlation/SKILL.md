@@ -16,8 +16,8 @@ Computes correlation, beta and rolling correlation from bars already on disk. Ev
 from the store at `~/.finance/` (or `$FINANCE_STORE`) and computed by
 `${CLAUDE_PLUGIN_ROOT}/toolkit/returns.py`, which prints a table or a short key/value block and
 never a bar row. Do not read a CSV, do not paste prices into the conversation, and do not compute
-a correlation by eye. A year of daily bars for twenty tickers is about 300KB on disk and about
-twenty lines in the transcript, and that gap is the whole point of the store.
+a correlation by eye. A year of daily bars for twenty tickers is roughly half a megabyte on disk
+and about twenty lines in the transcript, and that gap is the whole point of the store.
 
 (`${CLAUDE_PLUGIN_ROOT}` is this plugin's root directory, substituted automatically by Claude Code.
 On a tool that does not substitute it, resolve it yourself relative to this file: two levels up
@@ -102,8 +102,17 @@ into prose, or reformat the matrix.
 
 Then add, in this order:
 
-**Provenance, one line per key.** Read it with
-`python3 ${CLAUDE_PLUGIN_ROOT}/toolkit/store.py show KEY`:
+**Provenance, one line per key.** Read the sidecar with `store.py show`, which takes a bare key
+plus the source and interval as flags. The qualified `source/KEY` form works in `returns.py` and
+fails here:
+
+```bash
+python3 ${CLAUDE_PLUGIN_ROOT}/toolkit/store.py show AEB_IWDA --source ibkr --interval 1d
+```
+
+That prints the whole sidecar as a key/value block (`source`, `currency`, `adjusted`,
+`delayed_sec`, `start`, `end`, `isin` and the rest). Condense it to one line per key. The target
+rendering, which you write from those fields rather than copy from the command:
 
 ```
 ibkr/AEB_IWDA    source ibkr, EUR, adjusted false, as-of 2026-09-04, delayed 900s
@@ -135,7 +144,11 @@ which leg is unadjusted. Do not bury it under the correlation.
 - Sessions on different continents barely overlap. A European close lands hours before the US
   close, so a same-date correlation between a US and a EU line understates the contemporaneous
   relationship. Read a weak cross-venue number as a session artefact before reading it as
-  independence.
+  independence. Two ways round it today: refetch both legs weekly (`fetch_yf.py bars TICKER
+  --period 2y --interval 1wk`, or `ONE_WEEK` bars through `ibkr-data`) so a full week absorbs the
+  close-time gap, or compare the EU name's US listing instead (ASML on Nasdaq against MSFT) so both
+  legs share one session. Lagging one leg by a day is not implemented in `returns.py`; it is a
+  later toolkit item.
 
 Never recommend a trade, name an entry, or size a position. Present the numbers and let the user
 decide.
