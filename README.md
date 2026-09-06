@@ -29,6 +29,16 @@ codex plugin marketplace add siimvd/agent-plugins
 codex plugin add sdd@agent-plugins
 ```
 
+**Hermes** (tap install, one config edit needed for the tap path)
+```
+hermes skills tap add siimvd/agent-plugins
+hermes skills install siimvd/agent-plugins/tools-antislop
+```
+Hermes installs individual skills, not plugins, and taps look for a `skills/` root while this repo
+keeps its generated Hermes trees under `hermes/skills/`. See [`tools/README.md`](./tools/README.md#hermes-portability)
+for the `taps.json` edit that install needs, the security-scan rules, and the Fly.io setup. Only
+plugins with a `scripts/build-hermes.sh` ship a Hermes tree; today that is `tools`.
+
 **OpenCode**: no marketplace install yet. Each plugin ships a build script that generates
 OpenCode commands and agents locally; see its README.
 
@@ -48,6 +58,10 @@ bash sdd/scripts/lint.sh
 It checks structure across every registered plugin: skill frontmatter, file references, version
 agreement between a plugin's manifests and its marketplace entries, and that generated OpenCode
 output is deterministic. It does not check that a skill behaves correctly when invoked.
+
+A plugin that also targets Hermes needs a `scripts/build-hermes.sh` and a `hermes-description` on
+every one of its skills; lint then also checks that description's 57-character budget and that the
+committed `hermes/` tree matches what the generator produces.
 
 ## License
 
