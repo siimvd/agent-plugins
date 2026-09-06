@@ -161,7 +161,8 @@ build_skill() {
 
   # Collect the referenced support files. A dangling reference skips the whole
   # skill rather than shipping a broken one, matching build-opencode.sh.
-  local ref_files=() ref rel
+  local ref_files=() ref rel resolved_base
+  resolved_base="$(cd "$skill_dir" && pwd -P)"
   while IFS= read -r ref; do
     [[ -n "$ref" ]] || continue
     rel="${ref#"$CLAUDE_PLACEHOLDER/"}"
@@ -192,12 +193,11 @@ build_skill() {
     # that actually holds the referenced file and require it stay inside the
     # skill directory, per the repo's allowlist-plus-realpath-containment
     # pattern for external-identifier-as-path bugs.
-    local resolved_dir resolved_base
+    local resolved_dir
     resolved_dir="$(cd "$skill_dir/$(dirname "$rel")" 2>/dev/null && pwd -P)" || {
       echo "Error: $skill_file references '$rel', whose directory does not resolve" >&2
       exit 1
     }
-    resolved_base="$(cd "$skill_dir" && pwd -P)"
     case "$resolved_dir" in
       "$resolved_base"|"$resolved_base"/*) ;;
       *)

@@ -232,7 +232,13 @@ done
 # exactly what a Hermes tap fetches from GitHub, and the builds below overwrite
 # it in place, so sections 10 and 11 need it captured here or they would only
 # ever see freshly generated content and a hand edit would pass unnoticed.
-HERMES_STATUS_BEFORE="$(git status --porcelain hermes/ 2>/dev/null)"
+# --untracked-files=no is deliberate: a brand-new, not-yet-committed skill's
+# generated output is untracked too, and running the generator before staging
+# it is a normal part of adding a skill (see tools/README.md). Only a
+# modification to an already-tracked file is a hand edit worth flagging here;
+# missing untracked output is what the post-build freshness check below
+# already catches, correctly, as "needs to be committed."
+HERMES_STATUS_BEFORE="$(git status --porcelain --untracked-files=no hermes/ 2>/dev/null)"
 HERMES_PREBUILD=""
 if [[ "${#HERMES_BUILD_SCRIPTS[@]}" != 0 && -d hermes ]]; then
   HERMES_PREBUILD="$(mktemp -d)"
