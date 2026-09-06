@@ -153,6 +153,15 @@ class AlignTest(unittest.TestCase):
         self.assertEqual(dates, ["2025-01-01", "2025-01-03"])
         self.assertEqual(values["A"], [2.0, 1.0])
 
+    def test_duplicate_date_in_a_series_raises(self):
+        a = [("2025-01-01", 1.0), ("2025-01-02", 2.0), ("2025-01-02", 5.0)]
+        b = [("2025-01-01", 3.0), ("2025-01-02", 4.0)]
+        with self.assertRaises(ValueError) as caught:
+            returns.align({"A": a, "B": b})
+        message = str(caught.exception)
+        self.assertIn("A", message)
+        self.assertIn("2025-01-02", message)
+
 
 class PearsonBetaTest(unittest.TestCase):
     SERIES = [0.01, -0.02, 0.03, 0.005, -0.011, 0.02, -0.004, 0.017]
@@ -285,6 +294,25 @@ class PairCliTest(StoreBackedTest):
         self.assertEqual(code, 1)
         self.assertIn("NOPE", err)
 
+    def test_pair_rejects_mixed_intervals_when_interval_is_omitted(self):
+        self.seed()
+        write_series("yfinance", "TESTC", walk(30, 41), dates_from("2025-01-01", 30),
+                     interval="1w")
+        code, out, err = run(["pair", "TESTA", "TESTC"])
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertIn("TESTA", err)
+        self.assertIn("TESTC", err)
+        self.assertIn("1d", err)
+        self.assertIn("1w", err)
+
+    def test_pair_same_interval_still_works(self):
+        self.seed()
+        write_series("yfinance", "TESTC", walk(120, 41), self.dates, interval="1d")
+        code, out, err = run(["pair", "TESTA", "TESTC"])
+        self.assertEqual(code, 0, err)
+        self.assertIn("correlation", out)
+
 
 # ---------------------------------------------------------------------------
 # CLI: matrix
@@ -359,6 +387,16 @@ class MatrixCliTest(StoreBackedTest):
         code, _, err = run(["matrix", "TESTA"])
         self.assertEqual(code, 1)
         self.assertIn("two", err)
+
+    def test_matrix_rejects_an_odd_interval_key(self):
+        keys = self.seed()
+        write_series("yfinance", "TESTODD", walk(30, 41), dates_from("2025-01-01", 30),
+                     interval="1w")
+        code, out, err = run(["matrix"] + keys + ["TESTODD"])
+        self.assertEqual(code, 1)
+        self.assertEqual(out, "")
+        self.assertIn("TESTODD", err)
+        self.assertIn("1w", err)
 
 
 # ---------------------------------------------------------------------------

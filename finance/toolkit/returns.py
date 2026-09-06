@@ -97,7 +97,9 @@ def align(series_by_key):
     only sessions present in *every* series; each value list is in that order.
     ``report[key]`` gives ``input``, ``overlap`` and ``dropped`` counts, which
     is what tells a caller a series was mostly thrown away rather than mostly
-    matched.
+    matched. Raises ValueError naming the key and date if any series carries
+    two entries for the same date: overwriting one silently would produce a
+    return that looks like a genuine, non-overlapping observation.
     """
     if not series_by_key:
         raise ValueError("align needs at least one series")
@@ -111,7 +113,13 @@ def align(series_by_key):
     values = {}
     report = {}
     for key_, series in series_by_key.items():
-        lookup = dict(series)
+        lookup = {}
+        for date, value in series:
+            if date in lookup:
+                raise ValueError(
+                    "series %r has a duplicate date %r" % (key_, date)
+                )
+            lookup[date] = value
         values[key_] = [lookup[date] for date in ordered]
         report[key_] = {
             "input": len(series),
@@ -208,7 +216,17 @@ class _Series(object):
 
 
 def _load(specs, args):
-    return [_Series(spec, args.source, args.interval) for spec in specs]
+    series = [_Series(spec, args.source, args.interval) for spec in specs]
+    intervals = set(item.interval for item in series)
+    if len(intervals) > 1:
+        named = ", ".join(
+            "%s=%s" % (item.label, item.interval) for item in series
+        )
+        raise ValueError(
+            "legs resolved to different intervals (%s); pass --interval to "
+            "pin one" % named
+        )
+    return series
 
 
 # --------------------------------------------------------------------------
@@ -322,12 +340,14 @@ def _cmd_matrix(args):
 
     common, _, _ = align(dict((item.label, item.returns) for item in series))
     span = "%s to %s" % (common[0], common[-1]) if common else "no common session"
+    interval = series[0].interval
 
     if args.json:
         print(json.dumps(
             {
                 "keys": [item.label for item in series],
                 "labels": labels,
+                "interval": interval,
                 "matrix": cells,
                 "common_overlap": len(common),
                 "min_overlap": args.min_overlap,
@@ -348,9 +368,9 @@ def _cmd_matrix(args):
             + " |"
         )
     print(
-        "%d keys, pairwise Pearson on daily log returns, common overlap %d "
-        "sessions (%s), min overlap %d."
-        % (len(labels), len(common), span, args.min_overlap)
+        "%d keys, interval %s, pairwise Pearson on daily log returns, common "
+        "overlap %d sessions (%s), min overlap %d."
+        % (len(labels), interval, len(common), span, args.min_overlap)
     )
     return 0
 
@@ -376,6 +396,7 @@ def _cmd_rolling(args):
     payload = {
         "key_a": left.label,
         "key_b": right.label,
+        "interval": left.interval,
         "window": args.window,
         "aligned_returns": len(dates),
         "window_count": len(rolled),
@@ -393,10 +414,10 @@ def _cmd_rolling(args):
         return 0
 
     print(
-        "rolling correlation %s vs %s: window %d, %d windows over %d aligned "
-        "returns, %s to %s"
-        % (left.label, right.label, args.window, len(rolled), len(dates),
-           rolled[0][0], rolled[-1][0])
+        "rolling correlation %s vs %s: interval %s, window %d, %d windows "
+        "over %d aligned returns, %s to %s"
+        % (left.label, right.label, left.interval, args.window, len(rolled),
+           len(dates), rolled[0][0], rolled[-1][0])
     )
     notes = {low: "min", high: "max"}
     shown = sorted(set(list(range(0, len(rolled), ROLLING_STRIDE)) + [low, high]))

@@ -248,6 +248,19 @@ class TestWriteRead(StoreTestCase):
             store.write_bars("ibkr", "IBIS2_TESTA", "1d", rows, {})
         self.assertIn("date", str(caught.exception))
 
+    def test_write_rejects_duplicate_dates(self):
+        rows = make_rows(3)
+        rows[2]["date"] = rows[0]["date"]
+        with self.assertRaises(store.StoreError) as caught:
+            store.write_bars("ibkr", "IBIS2_TESTA", "1d", rows, {})
+        message = str(caught.exception)
+        self.assertIn(rows[0]["date"], message)
+        self.assertIn("0", message)
+        self.assertIn("2", message)
+        csv_path, meta_path = store.paths("ibkr", "IBIS2_TESTA", "1d")
+        self.assertFalse(os.path.exists(csv_path))
+        self.assertFalse(os.path.exists(meta_path))
+
     def test_write_accepts_row_with_no_volume_key(self):
         rows = make_rows(2)
         for row in rows:

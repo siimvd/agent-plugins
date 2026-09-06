@@ -269,6 +269,18 @@ class TestValidation(IngestTestCase):
         err = self.cli_failure(raw)
         self.assertIn("open", err)
 
+    def test_two_timestamps_on_the_same_utc_date_write_nothing(self):
+        raw = load_fixture(DELAYED_FIXTURE)
+        # both fall on 2026-08-24 UTC at the 1d session-date resolution,
+        # even though they are distinct instants.
+        raw["time"] = raw["time"][:2]
+        raw["time"][0] = "2026-08-24T07:00:00Z"
+        raw["time"][1] = "2026-08-24T15:00:00Z"
+        for field in ("open", "high", "low", "close", "volume"):
+            raw[field] = raw[field][:2]
+        err = self.cli_failure(raw)
+        self.assertIn("2026-08-24", err)
+
     def test_unreadable_raw_file(self):
         path = os.path.join(self.tmp, "missing.json")
         code, _, err = self.run_cli(

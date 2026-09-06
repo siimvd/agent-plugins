@@ -247,13 +247,27 @@ REQUIRED_ROW_FIELDS = ("date", "open", "high", "low", "close")
 
 
 def _check_rows(rows):
-    """Raise ValueError naming the row and field when a price field is absent."""
+    """Validate rows before they are written.
+
+    Raises ValueError naming the row and field when a price field is absent.
+    Raises StoreError naming the date and row indices when two rows share a
+    session date: a duplicate date is corrupt input for a bar series (there
+    is exactly one session per date), and letting it through silently drops
+    one of the two values wherever the series is later looked up by date.
+    """
+    seen = {}
     for index, row in enumerate(rows):
         for field in REQUIRED_ROW_FIELDS:
             if row.get(field) is None:
                 raise ValueError(
                     "row %d is missing required field %r" % (index, field)
                 )
+        date = row["date"]
+        if date in seen:
+            raise StoreError(
+                "duplicate date %r at rows %d and %d" % (date, seen[date], index)
+            )
+        seen[date] = index
 
 
 def write_bars(source, key_, interval, rows, meta=None):
@@ -262,7 +276,9 @@ def write_bars(source, key_, interval, rows, meta=None):
     ``rows`` is a list of dicts with ``date, open, high, low, close, volume``.
     Every field in :data:`REQUIRED_ROW_FIELDS` must be present and non-None on
     every row, or ValueError is raised naming the row index and the field.
-    ``volume`` may be absent or None and is then written as an empty cell.
+    Two rows sharing the same ``date`` raise StoreError naming the date and
+    the row indices. ``volume`` may be absent or None and is then written as
+    an empty cell.
     Rows are sorted ascending by ``date`` before writing. ``meta`` is merged
     over the computed fields; every field in :data:`OPTIONAL_META_FIELDS` is
     present in the sidecar, as JSON null when the caller did not supply it.
