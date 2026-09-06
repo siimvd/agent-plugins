@@ -96,11 +96,7 @@ def interval_for_step(step):
 
 def _series(raw, name, required):
     """Return one array from the response, checked for shape."""
-    if name not in raw:
-        if required:
-            raise IngestError("raw response has no %r array" % name)
-        return None
-    value = raw[name]
+    value = raw.get(name)
     if value is None:
         if required:
             raise IngestError("raw response has no %r array" % name)
@@ -114,8 +110,6 @@ def _number(value, name, index):
     """Coerce one price or volume cell to float, or raise IngestError."""
     if isinstance(value, bool) or value is None:
         raise IngestError("%s[%d] is not a number: %r" % (name, index, value))
-    if isinstance(value, (int, float)):
-        return float(value)
     try:
         return float(value)
     except (TypeError, ValueError):

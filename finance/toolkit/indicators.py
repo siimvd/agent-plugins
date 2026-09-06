@@ -85,9 +85,9 @@ def rsi_wilder(close, period=14):
         return out
     gains, losses = [], []
     for i in range(1, n):
-        ch = close[i] - close[i - 1]
-        gains.append(max(ch, 0.0))
-        losses.append(max(-ch, 0.0))
+        change = close[i] - close[i - 1]
+        gains.append(max(change, 0.0))
+        losses.append(max(-change, 0.0))
     # First a simple average over the first `period` changes, then Wilder.
     avg_gain = sum(gains[:period]) / period
     avg_loss = sum(losses[:period]) / period
@@ -100,9 +100,9 @@ def rsi_wilder(close, period=14):
 
     out[period] = rsi_val(avg_gain, avg_loss)
     for i in range(period + 1, n):
-        g, l = gains[i - 1], losses[i - 1]
-        avg_gain = (avg_gain * (period - 1) + g) / period
-        avg_loss = (avg_loss * (period - 1) + l) / period
+        gain, loss = gains[i - 1], losses[i - 1]
+        avg_gain = (avg_gain * (period - 1) + gain) / period
+        avg_loss = (avg_loss * (period - 1) + loss) / period
         out[i] = rsi_val(avg_gain, avg_loss)
     return out
 
@@ -313,19 +313,11 @@ def _resolve_entry(key_, source, interval):
     return matches[0]
 
 
-class _NotApplicable(object):
-    """Sentinel for a context field the --closes path cannot know."""
-
-    def __repr__(self):
-        return "n/a"
-
-
-_NOT_APPLICABLE = _NotApplicable()
+#: Placeholder for a context field the --closes path cannot know.
+_NOT_APPLICABLE = "n/a"
 
 
 def _format(value):
-    if value is _NOT_APPLICABLE:
-        return "n/a"
     if value is None:
         return "null"
     if isinstance(value, float):

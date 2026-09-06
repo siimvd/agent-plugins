@@ -168,22 +168,8 @@ def to_eur(amount, ccy, date=None):
 # Store access
 # --------------------------------------------------------------------------
 
-def resolve_entry(spec, source=None, interval=None):
-    """Resolve ``KEY`` or ``source/KEY`` to one ``(source, key, interval)``."""
-    if "/" in spec:
-        spec_source, _, key_ = spec.partition("/")
-        source = spec_source
-    else:
-        key_ = spec
-    matches = store.find_entries(key_, source, interval)
-    if not matches:
-        raise ValueError("no store entry for key %s" % spec)
-    if len(matches) > 1:
-        lines = ["ambiguous key %s; qualify it as source/KEY or pass "
-                 "--source/--interval. Matches:" % spec]
-        lines += ["  %s %s %s" % match for match in matches]
-        raise ValueError("\n".join(lines))
-    return matches[0]
+#: Key resolution lives in store.py; returns.py resolves keys the same way.
+resolve_entry = store.resolve_entry
 
 
 # --------------------------------------------------------------------------

@@ -152,7 +152,6 @@ class YahooDownloader:
         fast = yfinance.Ticker(ticker).fast_info
         out = {}
         for name in ("currency", "exchange"):
-            value = None
             try:
                 value = fast[name]
             except Exception:  # noqa: BLE001 - FastInfo raises assorted types
@@ -267,7 +266,7 @@ def fetch_bars(ticker, period="1y", interval="1d", downloader=None):
         "exchange": str(exchange) if exchange else None,
         "contract_id": None,
         "currency": currency,
-        "source_currency": raw_currency if raw_currency is None else str(raw_currency),
+        "source_currency": None if raw_currency is None else str(raw_currency),
         "price_scale": scale,
         "adjusted": True,
         "delayed_sec": 0,

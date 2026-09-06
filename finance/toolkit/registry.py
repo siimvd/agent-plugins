@@ -219,9 +219,7 @@ def add(isin, name=None, class_=None, ibkr=None, yahoo=None, lhv=None):
 
     reg = load()
     instruments = reg.setdefault("instruments", {})
-    instrument = instruments.get(key)
-    if instrument is None:
-        instrument = {"name": None, "class": None, "ibkr": [], "yahoo": None, "lhv": None}
+    instrument = instruments.get(key) or {}
     for field in INSTRUMENT_FIELDS:
         instrument.setdefault(field, None)
     instrument.setdefault("ibkr", [])
